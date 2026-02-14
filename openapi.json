@@ -1,6 +1,27 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/example-crud/ping": {
+      "get": {
+        "operationId": "ExampleCrudController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Example Crud"
+        ]
+      }
+    },
     "/example-crud/auth-test": {
       "get": {
         "operationId": "ExampleCrudController_authTest",
@@ -263,6 +284,511 @@
           "Example Crud"
         ]
       }
+    },
+    "/labs": {
+      "post": {
+        "operationId": "LabsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLabDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Labs"
+        ]
+      },
+      "get": {
+        "operationId": "LabsController_findAll",
+        "parameters": [
+          {
+            "name": "workshopId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HandsOnLabMongo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Labs"
+        ]
+      }
+    },
+    "/labs/{labId}": {
+      "get": {
+        "operationId": "LabsController_findOne",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Labs"
+        ]
+      },
+      "patch": {
+        "operationId": "LabsController_update",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLabDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Labs"
+        ]
+      },
+      "delete": {
+        "operationId": "LabsController_remove",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archivedBy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Labs"
+        ]
+      }
+    },
+    "/labs/{labId}/versions/draft": {
+      "post": {
+        "operationId": "LabVersionsController_createDraft",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDraftVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabVersionMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Versions"
+        ]
+      }
+    },
+    "/labs/{labId}/versions": {
+      "get": {
+        "operationId": "LabVersionsController_findAll",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HandsOnLabVersionMongo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Versions"
+        ]
+      }
+    },
+    "/labs/{labId}/versions/{versionId}": {
+      "get": {
+        "operationId": "LabVersionsController_findOne",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabVersionMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Versions"
+        ]
+      },
+      "patch": {
+        "operationId": "LabVersionsController_patchDraft",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDraftVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabVersionMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Versions"
+        ]
+      }
+    },
+    "/labs/{labId}/versions/{versionId}/publish": {
+      "post": {
+        "operationId": "LabVersionsController_publish",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabVersionMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Versions"
+        ]
+      }
+    },
+    "/embeds": {
+      "post": {
+        "operationId": "LabEmbedsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmbedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandsOnLabEmbedMongo"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Embeds"
+        ]
+      },
+      "get": {
+        "operationId": "LabEmbedsController_findAll",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workshopId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workshopDocumentId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HandsOnLabEmbedMongo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Lab Embeds"
+        ]
+      }
+    },
+    "/embeds/{embedId}": {
+      "delete": {
+        "operationId": "LabEmbedsController_remove",
+        "parameters": [
+          {
+            "name": "embedId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Lab Embeds"
+        ]
+      }
     }
   },
   "info": {
@@ -415,6 +941,387 @@
             "format": "date-time"
           }
         }
+      },
+      "CreateLabDto": {
+        "type": "object",
+        "properties": {
+          "workshopId": {
+            "type": "string"
+          },
+          "workshopDocumentGroupId": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "tags": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "intro",
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "estimatedMinutes": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "workshopId",
+          "slug",
+          "title",
+          "createdBy"
+        ]
+      },
+      "HandsOnLabMongo": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateLabDto": {
+        "type": "object",
+        "properties": {
+          "workshopId": {
+            "type": "string"
+          },
+          "workshopDocumentGroupId": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "tags": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "intro",
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "estimatedMinutes": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "ReferenceSolutionDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "notesMarkdown": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "ComparatorDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "deepEqual",
+              "strictEqual",
+              "numberTolerance",
+              "stringNormalized",
+              "custom"
+            ]
+          },
+          "tolerance": {
+            "type": "number"
+          },
+          "normalizeWhitespace": {
+            "type": "boolean"
+          },
+          "ignoreCase": {
+            "type": "boolean"
+          },
+          "customComparatorId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "LabTestCaseDto": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "io",
+              "unit"
+            ]
+          },
+          "input": {
+            "type": "object"
+          },
+          "expected": {
+            "type": "object"
+          },
+          "comparator": {
+            "$ref": "#/components/schemas/ComparatorDto"
+          },
+          "testCode": {
+            "type": "string"
+          },
+          "framework": {
+            "type": "string",
+            "enum": [
+              "jest",
+              "vitest"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
+      },
+      "LabRunnerConfigDto": {
+        "type": "object",
+        "properties": {
+          "timeoutMs": {
+            "type": "number"
+          },
+          "memoryMb": {
+            "type": "number"
+          },
+          "entryFnName": {
+            "type": "string"
+          },
+          "nodeVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "timeoutMs"
+        ]
+      },
+      "CreateDraftVersionDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "typescript",
+              "javascript"
+            ]
+          },
+          "promptMarkdown": {
+            "type": "string"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "starterCode": {
+            "type": "string"
+          },
+          "referenceSolution": {
+            "$ref": "#/components/schemas/ReferenceSolutionDto"
+          },
+          "sampleTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "hiddenTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "runner": {
+            "$ref": "#/components/schemas/LabRunnerConfigDto"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdBy"
+        ]
+      },
+      "HandsOnLabVersionMongo": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateDraftVersionDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "typescript",
+              "javascript"
+            ]
+          },
+          "promptMarkdown": {
+            "type": "string"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "starterCode": {
+            "type": "string"
+          },
+          "referenceSolution": {
+            "$ref": "#/components/schemas/ReferenceSolutionDto"
+          },
+          "sampleTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "hiddenTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "runner": {
+            "$ref": "#/components/schemas/LabRunnerConfigDto"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        }
+      },
+      "PublishVersionDto": {
+        "type": "object",
+        "properties": {
+          "publishedBy": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publishedBy"
+        ]
+      },
+      "CreateEmbedDto": {
+        "type": "object",
+        "properties": {
+          "labId": {
+            "type": "string"
+          },
+          "workshopId": {
+            "type": "string"
+          },
+          "workshopDocumentId": {
+            "type": "string"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "blockType": {
+            "type": "string",
+            "enum": [
+              "handsOnLab"
+            ],
+            "default": "handsOnLab"
+          },
+          "pinnedVersionId": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "labId",
+          "workshopId",
+          "workshopDocumentId",
+          "blockId",
+          "createdBy"
+        ]
+      },
+      "HandsOnLabEmbedMongo": {
+        "type": "object",
+        "properties": {}
       }
     }
   }
