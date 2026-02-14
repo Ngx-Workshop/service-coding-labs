@@ -7,7 +7,7 @@ services:
     container_name: coding-labs
     restart: unless-stopped
     ports:
-      - "3003:3003"
+      - "3009:3009"
     env_file:
       - .env
     networks:
