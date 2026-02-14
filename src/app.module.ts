@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CodingLabsModule } from './coding-labs/coding-labs.module';
-import { ExampleMongodbDocModule } from './example-crud/example-crud.module';
 
 const DB_IMPORTS =
   process.env.GENERATE_OPENAPI === 'true'
@@ -23,7 +22,6 @@ const DB_IMPORTS =
       isGlobal: true,
     }),
     ...DB_IMPORTS,
-    ExampleMongodbDocModule,
     CodingLabsModule,
   ],
   controllers: [],
