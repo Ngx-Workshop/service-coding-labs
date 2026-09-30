@@ -1,90 +1,143 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { LabVersionsService } from './lab-versions.service';
+import { initialContent } from './challenge-content';
 
-describe('LabVersionsService', () => {
+describe('LabVersionsService publication boundary', () => {
   let service: LabVersionsService;
-  let labVersionModel: any;
-  let labModel: any;
-
+  let versions: any;
+  let labs: any;
+  let runner: any;
+  const lab = { _id: 'lab', status: 'draft', currentDraftVersionId: 'version' };
+  const version = {
+    ...initialContent,
+    _id: 'version',
+    labId: 'lab',
+    isDraft: true,
+    contentHash: 'old',
+  };
+  const query = (value: unknown) => ({
+    exec: jest.fn().mockResolvedValue(value),
+  });
   beforeEach(() => {
-    labVersionModel = {
-      findOne: jest.fn(),
-      findByIdAndUpdate: jest.fn(),
+    versions = {
+      findOne: jest.fn(() => query(version)),
+      findOneAndUpdate: jest.fn(() => query({ ...version, isDraft: false })),
     };
-    labModel = {
-      findById: jest.fn(),
-      findByIdAndUpdate: jest.fn(),
-      exists: jest.fn(),
+    labs = {
+      findOneAndUpdate: jest.fn(() => query(lab)),
+      updateOne: jest.fn(() => query({})),
+      findByIdAndUpdate: jest.fn(() => query(lab)),
     };
-    service = new LabVersionsService(labVersionModel, labModel);
+    runner = {
+      verify: jest
+        .fn()
+        .mockResolvedValue({ passed: true, contentHash: 'verified' }),
+    };
+    service = new LabVersionsService(versions, labs, runner);
   });
-
-  it('rejects publish when sample tests are empty', async () => {
-    labModel.findById.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ _id: 'lab-1' }),
+  it('reruns the saved solution before publication and uses its hash', async () => {
+    await service.publish('lab', 'version', {
+      publishedBy: 'admin',
+      expectedContentHash: 'old',
     });
-    labVersionModel.findOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({
-        _id: 'ver-1',
-        labId: 'lab-1',
-        isDraft: true,
-        sampleTests: [],
-        runner: { timeoutMs: 1000 },
-      }),
-    });
-
-    await expect(
-      service.publish('lab-1', 'ver-1', { publishedBy: 'user-1' })
-    ).rejects.toThrow(BadRequestException);
-  });
-
-  it('publishes a valid draft and updates lab pointers', async () => {
-    labModel.findById.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ _id: 'lab-1' }),
-    });
-    labVersionModel.findOne.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({
-        _id: 'ver-1',
-        labId: 'lab-1',
-        isDraft: true,
-        sampleTests: [{ _id: 'test-1', name: 't', kind: 'io' }],
-        runner: { timeoutMs: 1000 },
-      }),
-    });
-    labVersionModel.findByIdAndUpdate.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({
-        _id: 'ver-1',
-        labId: 'lab-1',
-        isDraft: false,
-      }),
-    });
-    labModel.findByIdAndUpdate.mockReturnValue({
-      exec: jest.fn().mockResolvedValue({ _id: 'lab-1' }),
-    });
-
-    const result = await service.publish('lab-1', 'ver-1', {
-      publishedBy: 'user-1',
-    });
-
-    expect(result.isDraft).toBe(false);
-    expect(labVersionModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      'ver-1',
-      expect.objectContaining({
-        isDraft: false,
-        publishedBy: 'user-1',
-      }),
-      { new: true }
-    );
-    expect(labModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      'lab-1',
-      expect.objectContaining({
+    expect(runner.verify).toHaveBeenCalledWith(version);
+    expect(versions.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: 'version', labId: 'lab', isDraft: true },
+      {
         $set: expect.objectContaining({
-          latestPublishedVersionId: 'ver-1',
-          status: 'published',
-          updatedBy: 'user-1',
+          isDraft: false,
+          contentHash: 'verified',
         }),
-        $unset: { currentDraftVersionId: '' },
+      },
+      expect.anything()
+    );
+    expect(labs.updateOne).toHaveBeenCalled();
+  });
+  it('does not publish failing tests and releases the writer lock', async () => {
+    runner.verify.mockResolvedValue({ passed: false, results: [] });
+    await expect(
+      service.publish('lab', 'version', {
+        publishedBy: 'admin',
+        expectedContentHash: 'old',
+      })
+    ).rejects.toThrow(BadRequestException);
+    expect(versions.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(labs.updateOne).toHaveBeenCalled();
+  });
+  it('refuses publication when the saved snapshot changed', async () => {
+    await expect(
+      service.publish('lab', 'version', {
+        publishedBy: 'admin',
+        expectedContentHash: 'stale',
+      })
+    ).rejects.toThrow(ConflictException);
+    expect(runner.verify).not.toHaveBeenCalled();
+  });
+  it('repairs a failed publication pointer write on retry', async () => {
+    versions.findOne.mockReturnValue(
+      query({ ...version, isDraft: false, publishedAt: 'yesterday' })
+    );
+    const result = await service.publish('lab', 'version', {
+      publishedBy: 'admin',
+      expectedContentHash: 'old',
+    });
+    expect(result.isDraft).toBe(false);
+    expect(versions.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(labs.findByIdAndUpdate).toHaveBeenCalledWith(
+      'lab',
+      expect.objectContaining({
+        $set: expect.objectContaining({ latestPublishedVersionId: 'version' }),
       })
     );
+  });
+  it('rejects published edits and stale draft writes', async () => {
+    await expect(
+      service.patchDraft('lab', 'version', {
+        createdBy: 'admin',
+        expectedContentHash: 'stale',
+      })
+    ).rejects.toThrow(ConflictException);
+    versions.findOne.mockReturnValue(query({ ...version, isDraft: false }));
+    await expect(
+      service.patchDraft('lab', 'version', {
+        createdBy: 'admin',
+        expectedContentHash: 'old',
+      })
+    ).rejects.toThrow('immutable');
+    expect(versions.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+  it('rejects edits to a superseded draft', async () => {
+    labs.findOneAndUpdate.mockReturnValue(
+      query({ ...lab, currentDraftVersionId: 'new-version' })
+    );
+    await expect(
+      service.publish('lab', 'version', {
+        publishedBy: 'admin',
+        expectedContentHash: 'old',
+      })
+    ).rejects.toThrow(ConflictException);
+    expect(runner.verify).not.toHaveBeenCalled();
+  });
+  it('redacts solutions and hidden tests from public content', async () => {
+    labs.findById = jest.fn(() =>
+      query({
+        ...lab,
+        status: 'published',
+        latestPublishedVersionId: 'version',
+        title: 'Title',
+      })
+    );
+    versions.findOne.mockReturnValue({
+      lean: () =>
+        query({
+          ...version,
+          isDraft: false,
+          referenceSolution: { code: 'secret' },
+        }),
+    });
+    const content = await service.learnerContent('lab');
+    expect(content).not.toHaveProperty('hiddenTests');
+    expect(content).not.toHaveProperty('referenceSolution');
+    expect(content.sampleTests.length).toBe(1);
   });
 });

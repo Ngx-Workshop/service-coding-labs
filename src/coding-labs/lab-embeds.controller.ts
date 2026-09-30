@@ -1,4 +1,12 @@
 import {
+  ApiBearerAuth,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
+import { UseGuards, Req } from '@nestjs/common';
+import { CodingLabsAdminGuard } from './admin.guard';
+import { MongoIdPipe } from './mongo-id.pipe';
+import {
   Body,
   Controller,
   Delete,
@@ -21,6 +29,12 @@ import { LabEmbedsService } from './lab-embeds.service';
 import { HandsOnLabEmbedMongo } from './schemas/hands_on_lab_embeds.schema';
 
 @ApiTags('Lab Embeds')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({
+  description: 'Valid platform authentication required',
+})
+@ApiForbiddenResponse({ description: 'Administrator role required' })
+@UseGuards(CodingLabsAdminGuard)
 @Controller('embeds')
 export class LabEmbedsController {
   constructor(private readonly labEmbedsService: LabEmbedsService) {}
@@ -41,13 +55,17 @@ export class LabEmbedsController {
     @Query('workshopId') workshopId?: string,
     @Query('workshopDocumentId') workshopDocumentId?: string
   ) {
-    return this.labEmbedsService.findAll({ labId, workshopId, workshopDocumentId });
+    return this.labEmbedsService.findAll({
+      labId,
+      workshopId,
+      workshopDocumentId,
+    });
   }
 
   @Delete(':embedId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
-  async remove(@Param('embedId') embedId: string) {
+  async remove(@Param('embedId', MongoIdPipe) embedId: string) {
     await this.labEmbedsService.remove(embedId);
   }
 }

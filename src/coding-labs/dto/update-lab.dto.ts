@@ -1,4 +1,7 @@
-import { PartialType } from '@nestjs/swagger';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateLabDto } from './create-lab.dto';
 
-export class UpdateLabDto extends PartialType(CreateLabDto) {}
+// Ownership and publication state are not editable metadata.
+export class UpdateLabDto extends PartialType(
+  OmitType(CreateLabDto, ['createdBy', 'status', 'workshopId'] as const)
+) {}

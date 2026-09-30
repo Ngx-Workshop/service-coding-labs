@@ -1,3 +1,7 @@
+import { NgxAuthClientModule } from '@tmdjr/ngx-auth-client';
+import { CodingLabsAdminGuard } from './admin.guard';
+import { ChallengeRunnerService } from './challenge-runner.service';
+import { PublishedLabsController } from './published-labs.controller';
 import { Module } from '@nestjs/common';
 import { getModelToken, MongooseModule } from '@nestjs/mongoose';
 import { LabEmbedsController } from './lab-embeds.controller';
@@ -14,7 +18,10 @@ import {
   HandsOnLabVersionMongo,
   HandsOnLabVersionSchema,
 } from './schemas/hands_on_lab_versions.schema';
-import { HandsOnLabMongo, HandsOnLabSchema } from './schemas/hands_on_labs.schema';
+import {
+  HandsOnLabMongo,
+  HandsOnLabSchema,
+} from './schemas/hands_on_labs.schema';
 
 const SCHEMA_IMPORTS =
   process.env.GENERATE_OPENAPI === 'true'
@@ -39,7 +46,11 @@ const FAKE_PROVIDERS =
         {
           provide: getModelToken(HandsOnLabMongo.name),
           useValue: {
-            find: () => ({ sort: () => ({ limit: () => ({ skip: () => ({ exec: async () => [] }) }) }) }),
+            find: () => ({
+              sort: () => ({
+                limit: () => ({ skip: () => ({ exec: async () => [] }) }),
+              }),
+            }),
             findById: () => ({ exec: async () => null }),
             findByIdAndUpdate: () => ({ exec: async () => null }),
             exists: async () => null,
@@ -65,8 +76,20 @@ const FAKE_PROVIDERS =
     : [];
 
 @Module({
-  imports: [...SCHEMA_IMPORTS],
-  controllers: [LabsController, LabVersionsController, LabEmbedsController],
-  providers: [LabsService, LabVersionsService, LabEmbedsService, ...FAKE_PROVIDERS],
+  imports: [NgxAuthClientModule, ...SCHEMA_IMPORTS],
+  controllers: [
+    PublishedLabsController,
+    LabsController,
+    LabVersionsController,
+    LabEmbedsController,
+  ],
+  providers: [
+    CodingLabsAdminGuard,
+    ChallengeRunnerService,
+    LabsService,
+    LabVersionsService,
+    LabEmbedsService,
+    ...FAKE_PROVIDERS,
+  ],
 })
 export class CodingLabsModule {}

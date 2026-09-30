@@ -6,6 +6,10 @@ import {
   IsDefined,
   IsIn,
   IsInt,
+  IsNumber,
+  ArrayMaxSize,
+  MaxLength,
+  Matches,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -19,7 +23,15 @@ import { LabLanguage } from '../../collection-interfaces';
 const LAB_LANGUAGES: LabLanguage[] = ['typescript', 'javascript'];
 
 export class ComparatorDto {
-  @ApiProperty({ enum: ['deepEqual', 'strictEqual', 'numberTolerance', 'stringNormalized', 'custom'] })
+  @ApiProperty({
+    enum: [
+      'deepEqual',
+      'strictEqual',
+      'numberTolerance',
+      'stringNormalized',
+      'custom',
+    ],
+  })
   @IsIn([
     'deepEqual',
     'strictEqual',
@@ -27,10 +39,16 @@ export class ComparatorDto {
     'stringNormalized',
     'custom',
   ])
-  kind: 'deepEqual' | 'strictEqual' | 'numberTolerance' | 'stringNormalized' | 'custom';
+  kind:
+    | 'deepEqual'
+    | 'strictEqual'
+    | 'numberTolerance'
+    | 'stringNormalized'
+    | 'custom';
 
   @ApiPropertyOptional()
-  @IsInt()
+  @IsNumber({ allowNaN: false, allowInfinity: false })
+  @Min(0)
   @IsOptional()
   tolerance?: number;
 
@@ -65,13 +83,31 @@ export class LabTestCaseDto {
   @IsIn(['io', 'unit'])
   kind: 'io' | 'unit';
 
-  @ApiPropertyOptional()
-  @ValidateIf((o: LabTestCaseDto) => o.kind === 'io')
+  @ApiPropertyOptional({
+    nullable: true,
+    oneOf: [
+      { type: 'string' },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'array', items: {} },
+      { type: 'object', additionalProperties: true },
+    ],
+  })
+  @ValidateIf((o) => o.kind === 'io' && o.input === undefined)
   @IsDefined()
   input?: unknown;
 
-  @ApiPropertyOptional()
-  @ValidateIf((o: LabTestCaseDto) => o.kind === 'io')
+  @ApiPropertyOptional({
+    nullable: true,
+    oneOf: [
+      { type: 'string' },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'array', items: {} },
+      { type: 'object', additionalProperties: true },
+    ],
+  })
+  @ValidateIf((o) => o.kind === 'io' && o.expected === undefined)
   @IsDefined()
   expected?: unknown;
 
@@ -99,19 +135,20 @@ export class LabRunnerConfigDto {
   @ApiProperty()
   @IsInt()
   @Min(100)
-  @Max(300000)
+  @Max(10000)
   timeoutMs: number;
 
   @ApiPropertyOptional()
   @IsInt()
-  @Min(16)
-  @Max(4096)
+  @Min(64)
+  @Max(512)
   @IsOptional()
   memoryMb?: number;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  @Matches(/^[a-zA-Z_$][\w$]*$/)
   entryFnName?: string;
 
   @ApiPropertyOptional()
@@ -123,7 +160,7 @@ export class LabRunnerConfigDto {
 export class ReferenceSolutionDto {
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
+  @MaxLength(50000)
   code: string;
 
   @ApiPropertyOptional()
@@ -165,6 +202,7 @@ export class CreateDraftVersionDto {
   @Type(() => LabTestCaseDto)
   @IsArray()
   @IsOptional()
+  @ArrayMaxSize(50)
   sampleTests?: LabTestCaseDto[];
 
   @ApiPropertyOptional({ type: () => [LabTestCaseDto] })
@@ -172,6 +210,7 @@ export class CreateDraftVersionDto {
   @Type(() => LabTestCaseDto)
   @IsArray()
   @IsOptional()
+  @ArrayMaxSize(50)
   hiddenTests?: LabTestCaseDto[];
 
   @ApiPropertyOptional({ type: () => LabRunnerConfigDto })
@@ -192,6 +231,13 @@ export class CreateDraftVersionDto {
 }
 
 export class UpdateDraftVersionDto extends PartialType(CreateDraftVersionDto) {
+  @ApiProperty({
+    description: 'Hash from the loaded draft; prevents stale overwrites',
+  })
+  @IsString()
+  @IsNotEmpty()
+  expectedContentHash: string;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

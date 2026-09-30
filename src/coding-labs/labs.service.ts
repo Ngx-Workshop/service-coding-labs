@@ -21,6 +21,8 @@ export class LabsService {
   ) {}
 
   async create(createLabDto: CreateLabDto): Promise<HandsOnLabMongo> {
+    if (createLabDto.status && createLabDto.status !== 'draft')
+      throw new BadRequestException('New labs must start as drafts');
     const now = new Date().toISOString();
     try {
       const doc = new this.labModel({
@@ -57,7 +59,9 @@ export class LabsService {
     }
     if (filters.status) {
       if (!['draft', 'published', 'archived'].includes(filters.status)) {
-        throw new BadRequestException('status must be draft|published|archived');
+        throw new BadRequestException(
+          'status must be draft|published|archived'
+        );
       }
       query.status = filters.status;
     }
@@ -65,10 +69,27 @@ export class LabsService {
       query.tags = filters.tag;
     }
     if (filters.q) {
-      const qRegex = new RegExp(filters.q, 'i');
+      const qRegex = new RegExp(
+        filters.q.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'),
+        'i'
+      );
       query.$or = [{ title: qRegex }, { summary: qRegex }, { slug: qRegex }];
     }
 
+    if (
+      filters.limit !== undefined &&
+      (!Number.isInteger(filters.limit) ||
+        filters.limit < 1 ||
+        filters.limit > 100)
+    )
+      throw new BadRequestException(
+        'limit must be an integer between 1 and 100'
+      );
+    if (
+      filters.skip !== undefined &&
+      (!Number.isInteger(filters.skip) || filters.skip < 0)
+    )
+      throw new BadRequestException('skip must be a nonnegative integer');
     return this.labModel
       .find(query)
       .sort({ updatedAt: -1 })
@@ -85,7 +106,13 @@ export class LabsService {
     return doc;
   }
 
-  async update(labId: string, updateLabDto: UpdateLabDto): Promise<HandsOnLabMongo> {
+  async update(
+    labId: string,
+    updateLabDto: UpdateLabDto
+  ): Promise<HandsOnLabMongo> {
+    const current = await this.findOne(labId);
+    if (current.status === 'archived')
+      throw new BadRequestException('Archived labs cannot be edited');
     try {
       const doc = await this.labModel
         .findByIdAndUpdate(
@@ -94,7 +121,7 @@ export class LabsService {
             ...updateLabDto,
             updatedAt: new Date().toISOString(),
           },
-          { new: true }
+          { new: true, runValidators: true }
         )
         .exec();
       if (!doc) {
@@ -114,8 +141,14 @@ export class LabsService {
   async archive(labId: string, archivedBy?: string): Promise<HandsOnLabMongo> {
     const now = new Date().toISOString();
     const doc = await this.labModel
-      .findByIdAndUpdate(
-        labId,
+      .findOneAndUpdate(
+        {
+          _id: labId,
+          $or: [
+            { writeLockUntil: { $exists: false } },
+            { writeLockUntil: { $lt: new Date() } },
+          ],
+        },
         {
           status: 'archived',
           archivedAt: now,
@@ -123,10 +156,12 @@ export class LabsService {
           updatedAt: now,
           updatedBy: archivedBy ?? 'system',
         },
-        { new: true }
+        { new: true, runValidators: true }
       )
       .exec();
     if (!doc) {
+      if (await this.labModel.exists({ _id: labId }))
+        throw new ConflictException('Another operation is in progress');
       throw new NotFoundException(`Lab "${labId}" not found`);
     }
     return doc;

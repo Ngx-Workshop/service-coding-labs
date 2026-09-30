@@ -1,9 +1,16 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "deleteOutDir": true
+    "outDir": "./dist"
   },
-  "include": ["src/**/*.ts", "src/swagger.ts"],
-  "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/swagger.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*.spec.ts"
+  ]
 }

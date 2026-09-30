@@ -1,6 +1,9 @@
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
+  MaxLength,
+  Matches,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -17,6 +20,8 @@ export class CreateLabDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(200)
   workshopId: string;
 
   @ApiPropertyOptional()
@@ -27,11 +32,16 @@ export class CreateLabDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(200)
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   slug: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(200)
   title: string;
 
   @ApiPropertyOptional()

@@ -5,6 +5,11 @@ export class PublishVersionDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  expectedContentHash: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   publishedBy: string;
 
   @ApiPropertyOptional()

@@ -1,10 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsIn,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateEmbedDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @IsMongoId()
   labId: string;
 
   @ApiProperty()
@@ -30,6 +37,7 @@ export class CreateEmbedDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  @IsMongoId()
   pinnedVersionId?: string;
 
   @ApiProperty()

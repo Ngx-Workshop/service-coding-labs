@@ -1,6 +1,44 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/published-labs/{labId}": {
+      "get": {
+        "operationId": "PublishedLabsController_get",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedLabDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Published labs"
+        ]
+      }
+    },
     "/labs": {
       "post": {
         "operationId": "LabsController_create",
@@ -25,8 +63,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Labs"
         ]
@@ -96,8 +145,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Labs"
         ]
@@ -126,8 +186,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Labs"
         ]
@@ -164,8 +235,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Labs"
         ]
@@ -180,21 +262,24 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "archivedBy",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
           "204": {
             "description": ""
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Labs"
         ]
@@ -233,8 +318,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Versions"
         ]
@@ -266,8 +362,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Versions"
         ]
@@ -304,8 +411,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Versions"
         ]
@@ -350,8 +468,68 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Lab Versions"
+        ]
+      }
+    },
+    "/labs/{labId}/versions/{versionId}/verify": {
+      "post": {
+        "operationId": "LabVersionsController_verify",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Versions"
         ]
@@ -398,8 +576,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Versions"
         ]
@@ -429,8 +618,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Embeds"
         ]
@@ -476,8 +676,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Embeds"
         ]
@@ -499,8 +710,19 @@
         "responses": {
           "204": {
             "description": ""
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Lab Embeds"
         ]
@@ -510,13 +732,194 @@
   "info": {
     "title": "NGX coding-labs API",
     "description": "",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "contact": {}
   },
   "tags": [],
   "servers": [],
   "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
     "schemas": {
+      "ComparatorDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "deepEqual",
+              "strictEqual",
+              "numberTolerance",
+              "stringNormalized",
+              "custom"
+            ]
+          },
+          "tolerance": {
+            "type": "number"
+          },
+          "normalizeWhitespace": {
+            "type": "boolean"
+          },
+          "ignoreCase": {
+            "type": "boolean"
+          },
+          "customComparatorId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "LabTestCaseDto": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "io",
+              "unit"
+            ]
+          },
+          "input": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "expected": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "comparator": {
+            "$ref": "#/components/schemas/ComparatorDto"
+          },
+          "testCode": {
+            "type": "string"
+          },
+          "framework": {
+            "type": "string",
+            "enum": [
+              "jest",
+              "vitest"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
+      },
+      "PublishedLabDto": {
+        "type": "object",
+        "properties": {
+          "labId": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "intro",
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "javascript",
+              "typescript"
+            ]
+          },
+          "promptMarkdown": {
+            "type": "string"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "starterCode": {
+            "type": "string"
+          },
+          "sampleTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "entryFnName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "labId",
+          "versionId",
+          "versionNumber",
+          "title",
+          "language",
+          "promptMarkdown",
+          "hints",
+          "starterCode",
+          "sampleTests"
+        ]
+      },
       "CreateLabDto": {
         "type": "object",
         "properties": {
@@ -579,14 +982,92 @@
       },
       "HandsOnLabMongo": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "workshopId": {
+            "type": "string"
+          },
+          "workshopDocumentGroupId": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "intro",
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "estimatedMinutes": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ]
+          },
+          "currentDraftVersionId": {
+            "type": "string"
+          },
+          "latestPublishedVersionId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "archivedAt": {
+            "type": "string"
+          },
+          "archivedBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "workshopId",
+          "slug",
+          "title",
+          "tags",
+          "status",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "updatedBy"
+        ]
       },
       "UpdateLabDto": {
         "type": "object",
         "properties": {
-          "workshopId": {
-            "type": "string"
-          },
           "workshopDocumentGroupId": {
             "type": "string"
           },
@@ -618,18 +1099,6 @@
           "estimatedMinutes": {
             "type": "number"
           },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "published",
-              "archived"
-            ],
-            "default": "draft"
-          },
-          "createdBy": {
-            "type": "string"
-          },
           "updatedBy": {
             "type": "string"
           }
@@ -647,77 +1116,6 @@
         },
         "required": [
           "code"
-        ]
-      },
-      "ComparatorDto": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "deepEqual",
-              "strictEqual",
-              "numberTolerance",
-              "stringNormalized",
-              "custom"
-            ]
-          },
-          "tolerance": {
-            "type": "number"
-          },
-          "normalizeWhitespace": {
-            "type": "boolean"
-          },
-          "ignoreCase": {
-            "type": "boolean"
-          },
-          "customComparatorId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind"
-        ]
-      },
-      "LabTestCaseDto": {
-        "type": "object",
-        "properties": {
-          "_id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "io",
-              "unit"
-            ]
-          },
-          "input": {
-            "type": "object"
-          },
-          "expected": {
-            "type": "object"
-          },
-          "comparator": {
-            "$ref": "#/components/schemas/ComparatorDto"
-          },
-          "testCode": {
-            "type": "string"
-          },
-          "framework": {
-            "type": "string",
-            "enum": [
-              "jest",
-              "vitest"
-            ]
-          }
-        },
-        "required": [
-          "name",
-          "kind"
         ]
       },
       "LabRunnerConfigDto": {
@@ -793,7 +1191,86 @@
       },
       "HandsOnLabVersionMongo": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "labId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "number"
+          },
+          "isDraft": {
+            "type": "boolean"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "typescript",
+              "javascript"
+            ]
+          },
+          "promptMarkdown": {
+            "type": "string"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "starterCode": {
+            "type": "string"
+          },
+          "referenceSolution": {
+            "$ref": "#/components/schemas/ReferenceSolutionDto"
+          },
+          "sampleTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "hiddenTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "runner": {
+            "$ref": "#/components/schemas/LabRunnerConfigDto"
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "publishedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "contentHash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "labId",
+          "versionNumber",
+          "isDraft",
+          "language",
+          "promptMarkdown",
+          "starterCode",
+          "sampleTests",
+          "hiddenTests",
+          "runner",
+          "createdAt",
+          "createdBy"
+        ]
       },
       "UpdateDraftVersionDto": {
         "type": "object",
@@ -840,12 +1317,136 @@
           },
           "createdBy": {
             "type": "string"
+          },
+          "expectedContentHash": {
+            "type": "string",
+            "description": "Hash from the loaded draft; prevents stale overwrites"
           }
-        }
+        },
+        "required": [
+          "expectedContentHash"
+        ]
+      },
+      "TestResultDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "suite": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "hidden"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "error",
+              "timeout"
+            ]
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "actual": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "expected": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "suite",
+          "status",
+          "durationMs"
+        ]
+      },
+      "VerificationDto": {
+        "type": "object",
+        "properties": {
+          "passed": {
+            "type": "boolean"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "totalTests": {
+            "type": "number"
+          },
+          "passedTests": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestResultDto"
+            }
+          }
+        },
+        "required": [
+          "passed",
+          "contentHash",
+          "totalTests",
+          "passedTests",
+          "durationMs",
+          "results"
+        ]
       },
       "PublishVersionDto": {
         "type": "object",
         "properties": {
+          "expectedContentHash": {
+            "type": "string"
+          },
           "publishedBy": {
             "type": "string"
           },
@@ -854,6 +1455,7 @@
           }
         },
         "required": [
+          "expectedContentHash",
           "publishedBy"
         ]
       },
@@ -896,7 +1498,45 @@
       },
       "HandsOnLabEmbedMongo": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "labId": {
+            "type": "string"
+          },
+          "workshopId": {
+            "type": "string"
+          },
+          "workshopDocumentId": {
+            "type": "string"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "blockType": {
+            "type": "string"
+          },
+          "pinnedVersionId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "labId",
+          "workshopId",
+          "workshopDocumentId",
+          "blockId",
+          "blockType",
+          "createdAt",
+          "createdBy"
+        ]
       }
     }
   }

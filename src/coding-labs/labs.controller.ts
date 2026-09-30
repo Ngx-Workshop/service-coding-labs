@@ -1,4 +1,12 @@
 import {
+  ApiBearerAuth,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
+import { UseGuards, Req } from '@nestjs/common';
+import { CodingLabsAdminGuard } from './admin.guard';
+import { MongoIdPipe } from './mongo-id.pipe';
+import {
   Body,
   Controller,
   Delete,
@@ -23,6 +31,12 @@ import { LabsService } from './labs.service';
 import { HandsOnLabMongo } from './schemas/hands_on_labs.schema';
 
 @ApiTags('Labs')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({
+  description: 'Valid platform authentication required',
+})
+@ApiForbiddenResponse({ description: 'Administrator role required' })
+@UseGuards(CodingLabsAdminGuard)
 @Controller('labs')
 export class LabsController {
   constructor(private readonly labsService: LabsService) {}
@@ -61,23 +75,30 @@ export class LabsController {
 
   @Get(':labId')
   @ApiOkResponse({ type: HandsOnLabMongo })
-  findOne(@Param('labId') labId: string) {
+  findOne(@Param('labId', MongoIdPipe) labId: string) {
     return this.labsService.findOne(labId);
   }
 
   @Patch(':labId')
   @ApiOkResponse({ type: HandsOnLabMongo })
-  update(@Param('labId') labId: string, @Body() updateLabDto: UpdateLabDto) {
-    return this.labsService.update(labId, updateLabDto);
+  update(
+    @Param('labId', MongoIdPipe) labId: string,
+    @Body() updateLabDto: UpdateLabDto,
+    @Req() request: { user: { sub: string } }
+  ) {
+    return this.labsService.update(labId, {
+      ...updateLabDto,
+      updatedBy: request.user.sub,
+    });
   }
 
   @Delete(':labId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   async remove(
-    @Param('labId') labId: string,
-    @Query('archivedBy') archivedBy?: string
+    @Param('labId', MongoIdPipe) labId: string,
+    @Req() request: { user: { sub: string } }
   ) {
-    await this.labsService.archive(labId, archivedBy);
+    await this.labsService.archive(labId, request.user.sub);
   }
 }
