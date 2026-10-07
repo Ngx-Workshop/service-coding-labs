@@ -45,6 +45,6 @@ Default authoring access validates platform credentials and role=admin via @tmdj
 
 Every case uses a fresh non-root container with no network, host mounts or credentials, read-only root, dropped capabilities, no-new-privileges and CPU/PID/memory/output limits. Expected answers remain outside. node:vm is only a function harness inside the container, never a security boundary. There is no host-process fallback.
 
-The API needs a Docker CLI and execution daemon. Dockerfile includes the CLI, not a daemon/socket. Production must configure an isolated execution host through Docker connection settings, prepare/pin RUNNER_IMAGE, and review capacity. This admin-only reference verifier is not a hardened public multi-tenant judge.
+The API needs a Docker CLI and execution daemon. Dockerfile includes the CLI, not a daemon. The current same-server deployment and Compose configuration mount the host Docker socket; the deployment workflow prepares node:22-alpine before replacing the API container. This grants the API control of the host daemon. A dedicated execution host through authenticated Docker connection settings remains the preferred isolation improvement; prepare/pin RUNNER_IMAGE and review capacity there. This admin-only reference verifier is not a hardened public multi-tenant judge.
 
 References: [Docker controls](https://docs.docker.com/reference/cli/docker/container/run), [Node vm](https://nodejs.org/api/vm.html).

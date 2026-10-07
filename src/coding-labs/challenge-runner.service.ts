@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { spawn } from 'node:child_process';
@@ -44,6 +45,7 @@ process.stdin.on('end', async () => {
 
 @Injectable()
 export class ChallengeRunnerService {
+  private readonly logger = new Logger(ChallengeRunnerService.name);
   private active = 0;
 
   async verify(version: HandsOnLabVersionMongo): Promise<VerificationDto> {
@@ -212,9 +214,12 @@ export class ChallengeRunnerService {
       child.stdout.on('data', (data) => consume(data, false));
       child.stderr.on('data', (data) => consume(data, true));
       child.stdin.on('error', () => {});
-      child.on('error', () => {
+      child.on('error', (error) => {
         clearTimeout(timer);
         stopped = true;
+        this.logger.error(
+          `Docker runner unavailable (image=${image}, context=${context ?? 'default'}): ${error.message}`
+        );
         reject(
           new ServiceUnavailableException(
             'Docker runner is unavailable. Start Docker and prepare RUNNER_IMAGE.'
@@ -229,6 +234,9 @@ export class ChallengeRunnerService {
         }
         stopped = true;
         if (code === 125 || code === 126 || code === 127) {
+          this.logger.error(
+            `Docker runner could not start (exit=${code}, image=${image}, context=${context ?? 'default'}): ${stderr.trim().slice(0, 2000) || 'No Docker error output'}`
+          );
           reject(
             new ServiceUnavailableException(
               'Docker runner could not start. Check Docker and pull RUNNER_IMAGE.'

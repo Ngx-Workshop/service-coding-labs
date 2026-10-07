@@ -20,6 +20,47 @@ README lists commands. E2E creates a random coding_labs_test_* database on local
 
 Pre-pull the image; requests use --pull=never. Unavailable runner/image returns 503; two already-active verification suites return 429. Limits: 50 tests; 100–10000 ms/case; 64–512 MB/container; 60 seconds/suite; 64 KB output. Nest's default body-size limit applies.
 
+### Troubleshooting runner startup
+
+The runner uses Docker from the service process environment. An open SSH terminal
+does not configure a remote daemon. For a locally running service, start Docker
+Desktop and check `docker info`, `docker image inspect node:22-alpine`, and
+`docker run --rm --pull=never node:22-alpine node --version`. If using
+`RUNNER_DOCKER_CONTEXT`, use that same `--context` for every check and image pull.
+Restart the service after changing its environment.
+
+Runner startup failures log the image, context, exit code and up to 2,000
+characters of Docker stderr; missing-CLI failures log the spawn error. HTTP 503
+responses retain the generic message. Solution code and test inputs are not
+included in these diagnostic messages.
+
+On 2026-10-06, both local Docker sockets were unavailable. Starting Docker Desktop
+restored the default connection; the existing node:22-alpine image ran with the
+runner's isolation flags. A direct ChallengeRunnerService verification passed
+both sample and hidden sum-array tests, and all 26 unit tests passed, including
+startup diagnostics for exits 125/126/127 and a missing CLI. This check did not
+modify or verify the user's saved draft through the browser.
+
+### Production runner repair — 2026-10-06 (America/New_York)
+
+The production host had Docker 28.1.1, but the API container had no socket mount
+and the host lacked node:22-alpine. With explicit approval for same-server daemon
+access, the image was pulled and only coding-labs was recreated from its inspected
+configuration with /var/run/docker.sock mounted. The original container is stopped
+as coding-labs-before-runner-20261007T032354Z; its private configuration snapshot
+is /root/coding-labs-before-runner-20261007T032354Z/inspect.json on the server.
+The existing image, environment, ports and restart policy were preserved.
+
+Docker access from the replacement succeeded. Direct verification using the
+deployed ChallengeRunnerService passed both sum-array sample/hidden cases in
+701 ms. GET /labs returned the expected unauthenticated 401. The user's saved
+draft was not modified or verified through the authenticated browser flow.
+
+The local deployment workflow now pulls the default runner image before downtime
+and mounts the socket; Compose has the same mount and its configuration validates.
+These repository changes must be committed and deployed to retain the fix on
+future releases. A custom RUNNER_IMAGE must also be prepared on its daemon.
+
 ## Contracts
 
 Build dynamically imports AppModule after enabling generation mode, skipping Mongo. Generation stubs cannot serve live traffic. Generate OpenAPI and models from source; never manually edit generated output. Copy openapi.json to the remote and run its contracts:generate script. The remote's checked-in snapshot avoids requiring sibling source or an unpublished package.

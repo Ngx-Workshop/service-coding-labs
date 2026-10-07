@@ -201,6 +201,9 @@ jobs:
             docker network connect ngx-net ngx-auth-service 2>/dev/null || true
 
             docker build -t coding-labs .
+            # Verification uses --pull=never against the host Docker daemon.
+            docker pull node:22-alpine
+            test -S /var/run/docker.sock
 
             if docker container inspect coding-labs >/dev/null 2>&1; then
               previous_image=$(docker inspect --format '{{.Image}}' coding-labs)
@@ -222,6 +225,7 @@ jobs:
               --env-file .env \
               --network ngx-net \
               --restart unless-stopped \
+              --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
               -p 3009:3009 \
               coding-labs
 
