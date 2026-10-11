@@ -7,6 +7,8 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomUUID } from 'node:crypto';
+import { contentHash, initialContent } from './challenge-content';
+import { ChallengeRunnerService } from './challenge-runner.service';
 import {
   CreateDraftVersionDto,
   LabTestCaseDto,
@@ -14,16 +16,14 @@ import {
 } from './dto/create-draft-version.dto';
 import { PublishVersionDto } from './dto/publish-version.dto';
 import {
-  HandsOnLabDocument,
-  HandsOnLabMongo,
-} from './schemas/hands_on_labs.schema';
-import {
   HandsOnLabVersionDocument,
   HandsOnLabVersionMongo,
 } from './schemas/hands_on_lab_versions.schema';
-import { ChallengeRunnerService } from './challenge-runner.service';
-import { contentHash, initialContent } from './challenge-content';
-
+import {
+  HandsOnLabDocument,
+  HandsOnLabMongo,
+} from './schemas/hands_on_labs.schema';
+// tesst actions
 @Injectable()
 export class LabVersionsService {
   constructor(
