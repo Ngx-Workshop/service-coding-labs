@@ -39,6 +39,75 @@
         ]
       }
     },
+    "/published-labs": {
+      "get": {
+        "operationId": "LearnerLabsController_catalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Learner labs"
+        ]
+      }
+    },
+    "/published-labs/{labId}/grade": {
+      "post": {
+        "operationId": "LearnerLabsController_grade",
+        "parameters": [
+          {
+            "name": "labId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeLabDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabGradeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Learner labs"
+        ]
+      }
+    },
     "/labs": {
       "post": {
         "operationId": "LabsController_create",
@@ -920,6 +989,172 @@
           "sampleTests"
         ]
       },
+      "LabSummaryDto": {
+        "type": "object",
+        "properties": {
+          "labId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "workshopId": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": "string"
+          },
+          "estimatedMinutes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "labId",
+          "title",
+          "summary",
+          "slug",
+          "workshopId",
+          "tags"
+        ]
+      },
+      "GradeLabDto": {
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 50000
+          }
+        },
+        "required": [
+          "versionId",
+          "code"
+        ]
+      },
+      "TestResultDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "suite": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "hidden"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "error",
+              "timeout"
+            ]
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "actual": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "expected": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "suite",
+          "status",
+          "durationMs"
+        ]
+      },
+      "LabGradeDto": {
+        "type": "object",
+        "properties": {
+          "passed": {
+            "type": "boolean"
+          },
+          "totalTests": {
+            "type": "number"
+          },
+          "passedTests": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestResultDto"
+            }
+          }
+        },
+        "required": [
+          "passed",
+          "totalTests",
+          "passedTests",
+          "durationMs",
+          "results"
+        ]
+      },
       "CreateLabDto": {
         "type": "object",
         "properties": {
@@ -1325,86 +1560,6 @@
         },
         "required": [
           "expectedContentHash"
-        ]
-      },
-      "TestResultDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "suite": {
-            "type": "string",
-            "enum": [
-              "sample",
-              "hidden"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "passed",
-              "failed",
-              "error",
-              "timeout"
-            ]
-          },
-          "durationMs": {
-            "type": "number"
-          },
-          "actual": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "array",
-                "items": {}
-              },
-              {
-                "type": "object",
-                "additionalProperties": true
-              }
-            ]
-          },
-          "expected": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "array",
-                "items": {}
-              },
-              {
-                "type": "object",
-                "additionalProperties": true
-              }
-            ]
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "suite",
-          "status",
-          "durationMs"
         ]
       },
       "VerificationDto": {

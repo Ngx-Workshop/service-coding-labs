@@ -2,7 +2,7 @@
 
 ## Ownership and source map
 
-NestJS 11/Mongoose 8 owns challenge authoring and published delivery. Workshops, learner submissions, scoring and identity remain external.
+NestJS 11/Mongoose 8 owns challenge authoring and published delivery. Workshops, learner attempt persistence and identity remain external. This service also owns server grading of submitted learner code.
 
 | Source | Responsibility |
 | --- | --- |
@@ -37,7 +37,7 @@ Publication requires statement, starter, reference, unique test names, at least 
 
 Admin-only: /labs CRUD; /labs/:labId/versions, /draft and /:versionId; POST /:versionId/verify and /publish; /embeds CRUD. Verify and publish return 200. Creation returns 201, archive/delete 204. Invalid IDs return 400; missing entities 404; stale/busy writes 409.
 
-Public: GET /published-labs/:labId?versionId=... returns allowlisted published content. It excludes hiddenTests, referenceSolution, audit identities and internal locks. Draft/archived labs are unavailable. This task does not add learner submissions.
+Public: GET /published-labs/:labId?versionId=... returns allowlisted published content. It excludes hiddenTests, referenceSolution, audit identities and internal locks. Draft/archived labs are unavailable. GET /published-labs returns an allowlisted published catalog. Authenticated POST /published-labs/:labId/grade accepts versionId/code, checks published availability, runs saved sample/hidden tests, and returns totals plus sample-only feedback. No reference, hash or hidden details escape. Learner attempt persistence belongs to service-user-metadata.
 
 Default authoring access validates platform credentials and role=admin via @tmdjr/ngx-auth-client. The gateway forwards accessToken cookies or Bearer tokens. Audit actors are server-assigned. Embed creation requires a published lab in the same workshop and, if pinned, a published version of that lab.
 
@@ -45,6 +45,6 @@ Default authoring access validates platform credentials and role=admin via @tmdj
 
 Every case uses a fresh non-root container with no network, host mounts or credentials, read-only root, dropped capabilities, no-new-privileges and CPU/PID/memory/output limits. Expected answers remain outside. node:vm is only a function harness inside the container, never a security boundary. There is no host-process fallback.
 
-The API needs a Docker CLI and execution daemon. Dockerfile includes the CLI, not a daemon. The current same-server deployment and Compose configuration mount the host Docker socket; the deployment workflow prepares node:22-alpine before replacing the API container. This grants the API control of the host daemon. A dedicated execution host through authenticated Docker connection settings remains the preferred isolation improvement; prepare/pin RUNNER_IMAGE and review capacity there. This admin-only reference verifier is not a hardened public multi-tenant judge.
+The API needs a Docker CLI and execution daemon. Dockerfile includes the CLI, not a daemon. The current same-server deployment and Compose configuration mount the host Docker socket; the deployment workflow prepares node:22-alpine before replacing the API container. This grants the API control of the host daemon. A dedicated execution host through authenticated Docker connection settings remains the preferred isolation improvement; prepare/pin RUNNER_IMAGE and review capacity there. The runner now also accepts authenticated learner code. The existing per-process two-suite capacity limit applies to authoring and learner execution. Deployment capacity and isolation should be reviewed before enabling broader traffic.
 
 References: [Docker controls](https://docs.docker.com/reference/cli/docker/container/run), [Node vm](https://nodejs.org/api/vm.html).

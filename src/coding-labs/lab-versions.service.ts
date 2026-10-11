@@ -233,6 +233,43 @@ export class LabVersionsService {
     };
   }
 
+  async learnerCatalog() {
+    const labs = await this.labs
+      .find({
+        status: 'published',
+        latestPublishedVersionId: { $exists: true },
+      })
+      .sort({ title: 1 })
+      .lean()
+      .exec();
+    return labs.map((lab) => ({
+      labId: String(lab._id),
+      title: lab.title,
+      summary: lab.summary ?? '',
+      slug: lab.slug,
+      workshopId: lab.workshopId,
+      tags: lab.tags,
+      difficulty: lab.difficulty,
+      estimatedMinutes: lab.estimatedMinutes,
+    }));
+  }
+
+  async gradeLearner(labId: string, versionId: string, code: string) {
+    await this.learnerContent(labId, versionId);
+    const version = await this.findOne(labId, versionId);
+    const result = await this.runner.verify({
+      ...(JSON.parse(JSON.stringify(version)) as HandsOnLabVersionMongo),
+      referenceSolution: { code },
+    } as HandsOnLabVersionMongo);
+    return {
+      passed: result.passed,
+      totalTests: result.totalTests,
+      passedTests: result.passedTests,
+      durationMs: result.durationMs,
+      results: result.results.filter((r) => r.suite === 'sample'),
+    };
+  }
+
   private content(
     dto: CreateDraftVersionDto | UpdateDraftVersionDto,
     source: Partial<HandsOnLabVersionMongo>

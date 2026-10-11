@@ -1,3 +1,7 @@
+import {
+  LearnerLabsController,
+  CodingLabsLearnerGuard,
+} from './learner-labs.controller';
 import { NgxAuthClientModule } from '@tmdjr/ngx-auth-client';
 import { CodingLabsAdminGuard } from './admin.guard';
 import { ChallengeRunnerService } from './challenge-runner.service';
@@ -79,12 +83,14 @@ const FAKE_PROVIDERS =
   imports: [NgxAuthClientModule, ...SCHEMA_IMPORTS],
   controllers: [
     PublishedLabsController,
+    LearnerLabsController,
     LabsController,
     LabVersionsController,
     LabEmbedsController,
   ],
   providers: [
     CodingLabsAdminGuard,
+    CodingLabsLearnerGuard,
     ChallengeRunnerService,
     LabsService,
     LabVersionsService,

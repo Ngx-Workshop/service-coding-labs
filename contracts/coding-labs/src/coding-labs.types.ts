@@ -20,6 +20,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/published-labs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["LearnerLabsController_catalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/published-labs/{labId}/grade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["LearnerLabsController_grade"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/labs": {
         parameters: {
             query?: never;
@@ -207,6 +239,42 @@ export interface components {
             sampleTests: components["schemas"]["LabTestCaseDto"][];
             entryFnName?: string;
         };
+        LabSummaryDto: {
+            labId: string;
+            title: string;
+            summary: string;
+            slug: string;
+            workshopId: string;
+            tags: string[];
+            difficulty?: string;
+            estimatedMinutes?: number;
+        };
+        GradeLabDto: {
+            versionId: string;
+            code: string;
+        };
+        TestResultDto: {
+            name: string;
+            /** @enum {string} */
+            suite: "sample" | "hidden";
+            /** @enum {string} */
+            status: "passed" | "failed" | "error" | "timeout";
+            durationMs: number;
+            actual?: (string | number | boolean | unknown[] | {
+                [key: string]: unknown;
+            }) | null;
+            expected?: (string | number | boolean | unknown[] | {
+                [key: string]: unknown;
+            }) | null;
+            message?: string;
+        };
+        LabGradeDto: {
+            passed: boolean;
+            totalTests: number;
+            passedTests: number;
+            durationMs: number;
+            results: components["schemas"]["TestResultDto"][];
+        };
         CreateLabDto: {
             workshopId: string;
             workshopDocumentGroupId?: string;
@@ -318,21 +386,6 @@ export interface components {
             /** @description Hash from the loaded draft; prevents stale overwrites */
             expectedContentHash: string;
         };
-        TestResultDto: {
-            name: string;
-            /** @enum {string} */
-            suite: "sample" | "hidden";
-            /** @enum {string} */
-            status: "passed" | "failed" | "error" | "timeout";
-            durationMs: number;
-            actual?: (string | number | boolean | unknown[] | {
-                [key: string]: unknown;
-            }) | null;
-            expected?: (string | number | boolean | unknown[] | {
-                [key: string]: unknown;
-            }) | null;
-            message?: string;
-        };
         VerificationDto: {
             passed: boolean;
             contentHash: string;
@@ -398,6 +451,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublishedLabDto"];
+                };
+            };
+        };
+    };
+    LearnerLabsController_catalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSummaryDto"][];
+                };
+            };
+        };
+    };
+    LearnerLabsController_grade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                labId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GradeLabDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabGradeDto"];
                 };
             };
         };

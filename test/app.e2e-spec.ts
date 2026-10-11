@@ -183,4 +183,48 @@ describe('Coding labs HTTP contract (disposable local Mongo database)', () => {
       .send({ status: 'published' })
       .expect(400);
   });
+  it('lists only published learner content and grades only authenticated learner code', async () => {
+    const catalog = await admin().get('/published-labs').expect(200);
+    expect(catalog.body.some((lab) => lab.labId === labId)).toBe(true);
+    expect(catalog.body[0]).not.toHaveProperty('createdBy');
+    const path = '/published-labs/' + labId + '/grade';
+    await admin()
+      .post(path)
+      .send({ versionId: draft._id, code: 'code' })
+      .expect(401);
+    await admin()
+      .post(path)
+      .set('Authorization', 'Bearer regular')
+      .send({ versionId: 'bad', code: 'code' })
+      .expect(400);
+    await admin()
+      .post(path)
+      .set('Authorization', 'Bearer regular')
+      .send({ versionId: draft._id, code: 'code', passed: true })
+      .expect(400);
+    runner.verify.mockResolvedValue({
+      passed: false,
+      totalTests: 2,
+      passedTests: 1,
+      durationMs: 1,
+      contentHash: 'secret',
+      results: [
+        { name: 'sample', suite: 'sample', status: 'passed', durationMs: 1 },
+        {
+          name: 'secret',
+          suite: 'hidden',
+          status: 'failed',
+          expected: 'secret',
+        },
+      ],
+    });
+    const grade = await admin()
+      .post(path)
+      .set('Authorization', 'Bearer regular')
+      .send({ versionId: draft._id, code: 'function solve() { return null; }' })
+      .expect(200);
+    expect(grade.body.results.length).toBe(1);
+    expect(grade.body.totalTests).toBe(2);
+    expect(JSON.stringify(grade.body)).not.toContain('secret');
+  });
 });

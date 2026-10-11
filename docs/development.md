@@ -72,3 +72,7 @@ The source contract package version predates published 0.0.3. No version is publ
 PATCH and publish require expectedContentHash. Authoring now requires admin identity. Legacy timeout/memory limits and unit/custom cases may require changes before publication. Existing published content remains readable. Historical duplicate version numbers need auditing before adding a unique index.
 
 Publishing spans two Mongo writes; retry publish with the same version/hash to repair a failed pointer update. Already-completed publication is idempotent. Production auth/gateway/runner deployment remains a separate check. Dependency audits report findings; broad dependency upgrades are outside this change. Actual evidence is in the feature handoff.
+
+## Learner journey — 2026-10-11
+
+Additive public catalog and authenticated grading routes are in specs/002-learner-journey. User metadata forwards the current platform identity to POST /published-labs/:labId/grade. Published content and saved tests remain service-owned. Existing admin-only CRUD is unchanged. The isolated runner is reused, with no host/browser fallback. Build/OpenAPI and both contract generation/build commands regenerate additive producer types; assign a fresh contract version before publishing.
