@@ -48,3 +48,13 @@ Every case uses a fresh non-root container with no network, host mounts or crede
 The API needs a Docker CLI and execution daemon. Dockerfile includes the CLI, not a daemon. The current same-server deployment and Compose configuration mount the host Docker socket; the deployment workflow prepares node:22-alpine before replacing the API container. This grants the API control of the host daemon. A dedicated execution host through authenticated Docker connection settings remains the preferred isolation improvement; prepare/pin RUNNER_IMAGE and review capacity there. The runner now also accepts authenticated learner code. The existing per-process two-suite capacity limit applies to authoring and learner execution. Deployment capacity and isolation should be reviewed before enabling broader traffic.
 
 References: [Docker controls](https://docs.docker.com/reference/cli/docker/container/run), [Node vm](https://nodejs.org/api/vm.html).
+
+## Unsaved lab preflight — 2026-11-05
+
+Admin-only POST /lab-preflight accepts PreflightLabDto (draft content without audit
+identity/contentHash), normalizes it through LabVersionsService and runs the existing
+isolated ChallengeRunnerService. It never queries or writes lab/version models or
+acquires a persisted lab lock. Existing runner capacity, validation and container
+limits apply; 400 invalid/unsupported content, 429 capacity, 503 unavailable runner.
+The same input contract supports reference, starter and baseline checks requested by
+an authenticated authoring gateway. Caller chooses code, never runtime policy.

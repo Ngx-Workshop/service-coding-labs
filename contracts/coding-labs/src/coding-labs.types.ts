@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/lab-preflight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["LabPreflightController_verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/published-labs/{labId}": {
         parameters: {
             query?: never;
@@ -200,6 +216,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ReferenceSolutionDto: {
+            code: string;
+            notesMarkdown?: string;
+        };
         ComparatorDto: {
             /** @enum {string} */
             kind: "deepEqual" | "strictEqual" | "numberTolerance" | "stringNormalized" | "custom";
@@ -223,6 +243,46 @@ export interface components {
             testCode?: string;
             /** @enum {string} */
             framework?: "jest" | "vitest";
+        };
+        LabRunnerConfigDto: {
+            timeoutMs: number;
+            memoryMb?: number;
+            entryFnName?: string;
+            nodeVersion?: string;
+        };
+        PreflightLabDto: {
+            /** @enum {string} */
+            language?: "typescript" | "javascript";
+            promptMarkdown?: string;
+            hints?: string[];
+            starterCode?: string;
+            referenceSolution?: components["schemas"]["ReferenceSolutionDto"];
+            sampleTests?: components["schemas"]["LabTestCaseDto"][];
+            hiddenTests?: components["schemas"]["LabTestCaseDto"][];
+            runner?: components["schemas"]["LabRunnerConfigDto"];
+        };
+        TestResultDto: {
+            name: string;
+            /** @enum {string} */
+            suite: "sample" | "hidden";
+            /** @enum {string} */
+            status: "passed" | "failed" | "error" | "timeout";
+            durationMs: number;
+            actual?: (string | number | boolean | unknown[] | {
+                [key: string]: unknown;
+            }) | null;
+            expected?: (string | number | boolean | unknown[] | {
+                [key: string]: unknown;
+            }) | null;
+            message?: string;
+        };
+        VerificationDto: {
+            passed: boolean;
+            contentHash: string;
+            totalTests: number;
+            passedTests: number;
+            durationMs: number;
+            results: components["schemas"]["TestResultDto"][];
         };
         PublishedLabDto: {
             labId: string;
@@ -252,21 +312,6 @@ export interface components {
         GradeLabDto: {
             versionId: string;
             code: string;
-        };
-        TestResultDto: {
-            name: string;
-            /** @enum {string} */
-            suite: "sample" | "hidden";
-            /** @enum {string} */
-            status: "passed" | "failed" | "error" | "timeout";
-            durationMs: number;
-            actual?: (string | number | boolean | unknown[] | {
-                [key: string]: unknown;
-            }) | null;
-            expected?: (string | number | boolean | unknown[] | {
-                [key: string]: unknown;
-            }) | null;
-            message?: string;
         };
         LabGradeDto: {
             passed: boolean;
@@ -328,16 +373,6 @@ export interface components {
             estimatedMinutes?: number;
             updatedBy?: string;
         };
-        ReferenceSolutionDto: {
-            code: string;
-            notesMarkdown?: string;
-        };
-        LabRunnerConfigDto: {
-            timeoutMs: number;
-            memoryMb?: number;
-            entryFnName?: string;
-            nodeVersion?: string;
-        };
         CreateDraftVersionDto: {
             /** @enum {string} */
             language?: "typescript" | "javascript";
@@ -386,14 +421,6 @@ export interface components {
             /** @description Hash from the loaded draft; prevents stale overwrites */
             expectedContentHash: string;
         };
-        VerificationDto: {
-            passed: boolean;
-            contentHash: string;
-            totalTests: number;
-            passedTests: number;
-            durationMs: number;
-            results: components["schemas"]["TestResultDto"][];
-        };
         PublishVersionDto: {
             expectedContentHash: string;
             publishedBy: string;
@@ -432,6 +459,65 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    LabPreflightController_verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreflightLabDto"];
+            };
+        };
+        responses: {
+            /** @description Isolated verification without creating or changing a lab */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationDto"];
+                };
+            };
+            /** @description Incomplete or unsupported challenge content */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Valid platform authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Isolated verification is at capacity */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Isolated runner or execution image unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PublishedLabsController_get: {
         parameters: {
             query?: {

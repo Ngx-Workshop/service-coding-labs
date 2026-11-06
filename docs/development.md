@@ -76,3 +76,15 @@ Publishing spans two Mongo writes; retry publish with the same version/hash to r
 ## Learner journey — 2026-10-11
 
 Additive public catalog and authenticated grading routes are in specs/002-learner-journey. User metadata forwards the current platform identity to POST /published-labs/:labId/grade. Published content and saved tests remain service-owned. Existing admin-only CRUD is unchanged. The isolated runner is reused, with no host/browser fallback. Build/OpenAPI and both contract generation/build commands regenerate additive producer types; assign a fresh contract version before publishing.
+
+## Preflight checks — 2026-11-05
+
+New controller tests exercise real Nest routing, DTO validation and admin guard with
+an auth double; any model access fails the test. Runner execution is doubled there.
+A separate real Docker preflight verified a reference (2/2), unfinished starter (0/2)
+and constant-answer baseline (1/2), without database writes. No live production API
+or authenticated-shell acceptance is implied. Rebuild OpenAPI and both contract
+outputs; deploy this additive endpoint before gateway preparation is enabled. The
+existing contract source version predates registry releases; no owner package is
+published by this task. The gateway uses the documented wire shape and its validated
+version model alongside the existing published create-version type boundary.

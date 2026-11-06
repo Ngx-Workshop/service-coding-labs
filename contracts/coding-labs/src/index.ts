@@ -15,6 +15,7 @@ export type { LabGradeDto } from './models/LabGradeDto';
 export type { LabRunnerConfigDto } from './models/LabRunnerConfigDto';
 export type { LabSummaryDto } from './models/LabSummaryDto';
 export type { LabTestCaseDto } from './models/LabTestCaseDto';
+export type { PreflightLabDto } from './models/PreflightLabDto';
 export type { PublishedLabDto } from './models/PublishedLabDto';
 export type { PublishVersionDto } from './models/PublishVersionDto';
 export type { ReferenceSolutionDto } from './models/ReferenceSolutionDto';

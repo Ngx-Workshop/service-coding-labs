@@ -1,3 +1,4 @@
+import { LabPreflightController } from './lab-preflight.controller';
 import {
   LearnerLabsController,
   CodingLabsLearnerGuard,
@@ -82,6 +83,7 @@ const FAKE_PROVIDERS =
 @Module({
   imports: [NgxAuthClientModule, ...SCHEMA_IMPORTS],
   controllers: [
+    LabPreflightController,
     PublishedLabsController,
     LearnerLabsController,
     LabsController,

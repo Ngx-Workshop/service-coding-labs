@@ -1,3 +1,4 @@
+import { PreflightLabDto } from './dto/preflight.dto';
 import {
   BadRequestException,
   ConflictException,
@@ -132,6 +133,14 @@ export class LabVersionsService {
         .exec();
       return updated;
     });
+  }
+
+  async preflight(dto: PreflightLabDto) {
+    const version = Object.assign(
+      new HandsOnLabVersionMongo(),
+      this.content({ ...dto, createdBy: 'preflight' }, {})
+    );
+    return this.runner.verify(version);
   }
 
   async verify(labId: string, versionId: string) {

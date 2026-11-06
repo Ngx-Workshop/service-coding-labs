@@ -1,6 +1,57 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/lab-preflight": {
+      "post": {
+        "operationId": "LabPreflightController_verify",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreflightLabDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Isolated verification without creating or changing a lab",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incomplete or unsupported challenge content"
+          },
+          "401": {
+            "description": "Valid platform authentication required"
+          },
+          "403": {
+            "description": "Administrator role required"
+          },
+          "429": {
+            "description": "Isolated verification is at capacity"
+          },
+          "503": {
+            "description": "Isolated runner or execution image unavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Lab preflight"
+        ]
+      }
+    },
     "/published-labs/{labId}": {
       "get": {
         "operationId": "PublishedLabsController_get",
@@ -815,6 +866,20 @@
       }
     },
     "schemas": {
+      "ReferenceSolutionDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "notesMarkdown": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
       "ComparatorDto": {
         "type": "object",
         "properties": {
@@ -922,6 +987,182 @@
         "required": [
           "name",
           "kind"
+        ]
+      },
+      "LabRunnerConfigDto": {
+        "type": "object",
+        "properties": {
+          "timeoutMs": {
+            "type": "number"
+          },
+          "memoryMb": {
+            "type": "number"
+          },
+          "entryFnName": {
+            "type": "string"
+          },
+          "nodeVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "timeoutMs"
+        ]
+      },
+      "PreflightLabDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "typescript",
+              "javascript"
+            ]
+          },
+          "promptMarkdown": {
+            "type": "string"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "starterCode": {
+            "type": "string"
+          },
+          "referenceSolution": {
+            "$ref": "#/components/schemas/ReferenceSolutionDto"
+          },
+          "sampleTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "hiddenTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabTestCaseDto"
+            }
+          },
+          "runner": {
+            "$ref": "#/components/schemas/LabRunnerConfigDto"
+          }
+        }
+      },
+      "TestResultDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "suite": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "hidden"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "error",
+              "timeout"
+            ]
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "actual": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "expected": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "suite",
+          "status",
+          "durationMs"
+        ]
+      },
+      "VerificationDto": {
+        "type": "object",
+        "properties": {
+          "passed": {
+            "type": "boolean"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "totalTests": {
+            "type": "number"
+          },
+          "passedTests": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestResultDto"
+            }
+          }
+        },
+        "required": [
+          "passed",
+          "contentHash",
+          "totalTests",
+          "passedTests",
+          "durationMs",
+          "results"
         ]
       },
       "PublishedLabDto": {
@@ -1043,86 +1284,6 @@
         "required": [
           "versionId",
           "code"
-        ]
-      },
-      "TestResultDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "suite": {
-            "type": "string",
-            "enum": [
-              "sample",
-              "hidden"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "passed",
-              "failed",
-              "error",
-              "timeout"
-            ]
-          },
-          "durationMs": {
-            "type": "number"
-          },
-          "actual": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "array",
-                "items": {}
-              },
-              {
-                "type": "object",
-                "additionalProperties": true
-              }
-            ]
-          },
-          "expected": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "array",
-                "items": {}
-              },
-              {
-                "type": "object",
-                "additionalProperties": true
-              }
-            ]
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "suite",
-          "status",
-          "durationMs"
         ]
       },
       "LabGradeDto": {
@@ -1339,40 +1500,6 @@
           }
         }
       },
-      "ReferenceSolutionDto": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "notesMarkdown": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code"
-        ]
-      },
-      "LabRunnerConfigDto": {
-        "type": "object",
-        "properties": {
-          "timeoutMs": {
-            "type": "number"
-          },
-          "memoryMb": {
-            "type": "number"
-          },
-          "entryFnName": {
-            "type": "string"
-          },
-          "nodeVersion": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "timeoutMs"
-        ]
-      },
       "CreateDraftVersionDto": {
         "type": "object",
         "properties": {
@@ -1560,40 +1687,6 @@
         },
         "required": [
           "expectedContentHash"
-        ]
-      },
-      "VerificationDto": {
-        "type": "object",
-        "properties": {
-          "passed": {
-            "type": "boolean"
-          },
-          "contentHash": {
-            "type": "string"
-          },
-          "totalTests": {
-            "type": "number"
-          },
-          "passedTests": {
-            "type": "number"
-          },
-          "durationMs": {
-            "type": "number"
-          },
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TestResultDto"
-            }
-          }
-        },
-        "required": [
-          "passed",
-          "contentHash",
-          "totalTests",
-          "passedTests",
-          "durationMs",
-          "results"
         ]
       },
       "PublishVersionDto": {
