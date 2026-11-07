@@ -37,3 +37,17 @@ reference 7/7, starter 0/7, constant baseline 1/7. Local owner verification pass
 33 tests, build, OpenAPI and contract generation/build. The user explicitly authorized
 committing/pushing this preflight feature to main, including automatic contract
 publication and production deployment. Live route and wizard acceptance follow CI.
+
+## Production rollout verified
+
+Commit 1a710e3c8f7736a0964ce56d27d0db6f2beff7e8 was committed/pushed with explicit
+user approval. Contract publication and production deployment both succeeded:
+https://github.com/Ngx-Workshop/service-coding-labs/actions/runs/42162389103
+Live POST /api/coding-labs/lab-preflight through the administrator proxy changed
+from 404 missing route to the expected unauthenticated 401. The existing draft
+was then revalidated through the authenticated real administrator wizard: all
+seven automated checks passed, no failed checks, and Continue to publish became
+enabled. The reference passed all seven cases, starter failed all seven and the
+constant baseline passed only one. No workshop resources were published or changed.
+This verifies live owner/admin/gateway preflight integration; paid model generation
+and final workshop publication are separate acceptance paths.
