@@ -147,7 +147,9 @@ export class ChallengeRunnerService {
     const name = `coding-labs-${randomUUID()}`;
     const context = process.env.RUNNER_DOCKER_CONTEXT;
     const prefix = context ? ['--context', context] : [];
-    const image = process.env.RUNNER_IMAGE ?? 'node:22-alpine';
+    const image =
+      process.env.RUNNER_IMAGE ??
+      'node:22.23.5-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a';
     return new Promise((resolve, reject) => {
       const child = spawn(
         'docker',
