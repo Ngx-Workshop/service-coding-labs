@@ -1,3 +1,7 @@
+import {
+  configureObservability,
+  createServiceLogger,
+} from './observability/observability';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
@@ -5,7 +9,10 @@ import { localDevelopmentEnabled } from './coding-labs/admin.guard';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: createServiceLogger(),
+  });
+  configureObservability(app);
   if (process.env.GENERATE_OPENAPI === 'true')
     throw new Error('Generation mode cannot serve requests');
   app.use(cookieParser());

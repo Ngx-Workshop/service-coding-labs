@@ -7,3 +7,5 @@
 - [003 — Workshop preparation skills and checks](003-workshop-preparation/spec.md): Implemented; production acceptance pending.
 
 - [004-deployment-cleanup](004-deployment-cleanup/spec.md): Deployment cleanup; implemented and locally verified.
+
+- [005-service-observability](005-service-observability/spec.md): Implemented and locally verified; Grafana ingestion authorization pending.

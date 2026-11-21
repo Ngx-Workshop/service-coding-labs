@@ -226,7 +226,7 @@ jobs:
               --name coding-labs \
               --env-file .env \
               --network ngx-net \
-              --restart unless-stopped \
+              --restart unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
               --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
               -p 3009:3009 \
               coding-labs
