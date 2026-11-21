@@ -88,3 +88,7 @@ outputs; deploy this additive endpoint before gateway preparation is enabled. Th
 existing contract source version predates registry releases; no owner package is
 published by this task. The gateway uses the documented wire shape and its validated
 version model alongside the existing published create-version type boundary.
+
+## Deployment storage policy
+
+See [deployment cleanup](deployment-cleanup.md) for success-only image/container retention and local verification.

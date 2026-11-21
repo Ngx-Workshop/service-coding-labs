@@ -5,3 +5,5 @@
 - [002 — Learner journey](002-learner-journey/spec.md): Implemented; authenticated beta integration pending.
 
 - [003 — Workshop preparation skills and checks](003-workshop-preparation/spec.md): Implemented; production acceptance pending.
+
+- [004-deployment-cleanup](004-deployment-cleanup/spec.md): Deployment cleanup; implemented and locally verified.
