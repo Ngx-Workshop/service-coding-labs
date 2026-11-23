@@ -130,3 +130,5 @@ See [logging and heartbeat](observability.md) for operational endpoint semantics
   build. Publishing additionally runs lint/format/unit gates before its existing
   generation/release steps. Mongo e2e still requires its local disposable database;
   Docker execution and live Grafana acceptance are separate infrastructure checks.
+
+Deployment and npm publication now follow [deployment-workflows](deployment-workflows.md).

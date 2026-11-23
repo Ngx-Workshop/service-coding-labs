@@ -67,3 +67,5 @@ acquires a persisted lab lock. Existing runner capacity, validation and containe
 limits apply; 400 invalid/unsupported content, 429 capacity, 503 unavailable runner.
 The same input contract supports reference, starter and baseline checks requested by
 an authenticated authoring gateway. Caller chooses code, never runtime policy.
+
+Generated deployment orchestration is centrally managed by the Node CLI; see [deployment-workflows](deployment-workflows.md).
