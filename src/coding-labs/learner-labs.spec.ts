@@ -1,5 +1,5 @@
 import { LabVersionsService } from './lab-versions.service';
-import { CodingLabsLearnerGuard } from './learner-labs.controller';
+import { CodingLabsLearnerGuard } from './learner.guard';
 import { ExecutionContext } from '@nestjs/common';
 import { initialContent } from './challenge-content';
 
@@ -78,20 +78,18 @@ describe('Learner lab boundary', () => {
     await expect(guard.canActivate(context)).resolves.toBe(true);
   });
   it('catalog excludes drafts, archived records and authoring fields', async () => {
-    const exec = jest
-      .fn()
-      .mockResolvedValue([
-        {
-          _id: 'lab',
-          title: 'Sum',
-          summary: 'Add numbers',
-          slug: 'sum',
-          workshopId: 'workshop',
-          tags: [],
-          createdBy: 'private',
-          currentDraftVersionId: 'private',
-        },
-      ]);
+    const exec = jest.fn().mockResolvedValue([
+      {
+        _id: 'lab',
+        title: 'Sum',
+        summary: 'Add numbers',
+        slug: 'sum',
+        workshopId: 'workshop',
+        tags: [],
+        createdBy: 'private',
+        currentDraftVersionId: 'private',
+      },
+    ]);
     const labs = {
       find: jest.fn(() => ({ sort: () => ({ lean: () => ({ exec }) }) })),
     };

@@ -7,14 +7,15 @@ import {
 import { AuthClientService } from '@tmdjr/ngx-auth-client';
 import request = require('supertest');
 import { LabPreflightController } from './lab-preflight.controller';
-import { LabVersionsService } from './lab-versions.service';
+import { LabPreflightService } from './lab-preflight.service';
 import { CodingLabsAdminGuard } from './admin.guard';
 import { ChallengeRunnerService } from './challenge-runner.service';
 import { initialContent, validateChallenge } from './challenge-content';
 import { HandsOnLabVersionMongo } from './schemas/hands_on_lab_versions.schema';
+import type { Server } from 'node:http';
 
 describe('admin lab preflight HTTP boundary', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
   const verify = jest.fn(async (version: HandsOnLabVersionMongo) => {
     validateChallenge(version);
     return {
@@ -50,28 +51,11 @@ describe('admin lab preflight HTTP boundary', () => {
           },
         },
         {
-          provide: LabVersionsService,
+          provide: LabPreflightService,
           useFactory: () =>
-            new LabVersionsService(
-              // Any persistence access fails this test: preflight must be pure authoring execution.
-              new Proxy(
-                {},
-                {
-                  get: () => {
-                    throw new Error('Unexpected database access');
-                  },
-                }
-              ) as never,
-              new Proxy(
-                {},
-                {
-                  get: () => {
-                    throw new Error('Unexpected database access');
-                  },
-                }
-              ) as never,
-              { verify } as unknown as ChallengeRunnerService
-            ),
+            new LabPreflightService({
+              verify,
+            } as unknown as ChallengeRunnerService),
         },
       ],
     }).compile();
@@ -136,5 +120,19 @@ describe('admin lab preflight HTTP boundary', () => {
       .set('Authorization', 'Bearer admin')
       .send(value)
       .expect(400);
+  });
+  it.each([429, 503])('preserves runner failure status %s', async (status) => {
+    const { HttpException } = await import('@nestjs/common');
+    verify.mockRejectedValueOnce(
+      new HttpException('Runner unavailable', status)
+    );
+    await request(app.getHttpServer())
+      .post('/lab-preflight')
+      .set('Authorization', 'Bearer admin')
+      .send({
+        ...initialContent,
+        referenceSolution: { code: 'function solve() { return 0; }' },
+      })
+      .expect(status);
   });
 });

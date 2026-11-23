@@ -1,12 +1,19 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { LabVersionsService } from './lab-versions.service';
 import { initialContent } from './challenge-content';
 
 describe('LabVersionsService publication boundary', () => {
   let service: LabVersionsService;
-  let versions: any;
-  let labs: any;
-  let runner: any;
+  let versions: { findOne: jest.Mock; findOneAndUpdate: jest.Mock };
+  let labs: {
+    findOneAndUpdate: jest.Mock;
+    updateOne: jest.Mock;
+    findByIdAndUpdate: jest.Mock;
+    findById?: jest.Mock;
+  };
+  let runner: { verify: jest.Mock };
+  let log: jest.SpyInstance;
+  let warn: jest.SpyInstance;
   const lab = { _id: 'lab', status: 'draft', currentDraftVersionId: 'version' };
   const version = {
     ...initialContent,
@@ -19,6 +26,9 @@ describe('LabVersionsService publication boundary', () => {
     exec: jest.fn().mockResolvedValue(value),
   });
   beforeEach(() => {
+    log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
     versions = {
       findOne: jest.fn(() => query(version)),
       findOneAndUpdate: jest.fn(() => query({ ...version, isDraft: false })),
@@ -33,8 +43,13 @@ describe('LabVersionsService publication boundary', () => {
         .fn()
         .mockResolvedValue({ passed: true, contentHash: 'verified' }),
     };
-    service = new LabVersionsService(versions, labs, runner);
+    service = new LabVersionsService(
+      versions as never,
+      labs as never,
+      runner as never
+    );
   });
+  afterEach(() => jest.restoreAllMocks());
   it('reruns the saved solution before publication and uses its hash', async () => {
     await service.publish('lab', 'version', {
       publishedBy: 'admin',
@@ -52,6 +67,9 @@ describe('LabVersionsService publication boundary', () => {
       expect.anything()
     );
     expect(labs.updateOne).toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'lab_published', outcome: 'success' })
+    );
   });
   it('does not publish failing tests and releases the writer lock', async () => {
     runner.verify.mockResolvedValue({ passed: false, results: [] });
@@ -72,6 +90,9 @@ describe('LabVersionsService publication boundary', () => {
       })
     ).rejects.toThrow(ConflictException);
     expect(runner.verify).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'rejected', statusCode: 409 })
+    );
   });
   it('repairs a failed publication pointer write on retry', async () => {
     versions.findOne.mockReturnValue(
@@ -89,6 +110,23 @@ describe('LabVersionsService publication boundary', () => {
         $set: expect.objectContaining({ latestPublishedVersionId: 'version' }),
       })
     );
+  });
+  it('propagates a pointer storage failure, releases the lock and repairs on retry', async () => {
+    labs.findByIdAndUpdate.mockReturnValueOnce({
+      exec: jest.fn().mockRejectedValue(new Error('storage unavailable')),
+    });
+    const publish = () =>
+      service.publish('lab', 'version', {
+        publishedBy: 'admin',
+        expectedContentHash: 'old',
+      });
+    await expect(publish()).rejects.toThrow('storage unavailable');
+    expect(labs.updateOne).toHaveBeenCalledTimes(1);
+    versions.findOne.mockReturnValue(query({ ...version, isDraft: false }));
+    await expect(publish()).resolves.toMatchObject({ isDraft: false });
+    expect(labs.updateOne).toHaveBeenCalledTimes(2);
+    expect(versions.findOneAndUpdate).toHaveBeenCalledTimes(1);
+    expect(runner.verify).toHaveBeenCalledTimes(2);
   });
   it('rejects published edits and stale draft writes', async () => {
     await expect(

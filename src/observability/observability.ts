@@ -1,6 +1,7 @@
 import { ConsoleLogger, INestApplication, Logger } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
+import { requestContext } from './domain-operation';
 
 export function createServiceLogger(): ConsoleLogger {
   return new ConsoleLogger({
@@ -38,7 +39,7 @@ export function httpLoggingMiddleware(logger = new Logger('HTTP')) {
       else if (entry.statusCode >= 400) logger.warn(entry);
       else logger.log(entry);
     });
-    next();
+    requestContext.run({ requestId }, next);
   };
 }
 

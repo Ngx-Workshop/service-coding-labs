@@ -22,6 +22,8 @@ On Docker Desktop, set RUNNER_DOCKER_CONTEXT=desktop-linux if needed. The local 
 - npm run test:e2e -- --runInBand — HTTP contract with disposable local Mongo and mocked auth/runner.
 - npm run test:smoke — real Docker tests; its records are archived afterward.
 - npm run build — build and database-free OpenAPI generation.
+- npm run lint:check && npm run format:check — non-mutating checks; inherited lint debt is explicitly baselined.
+- node scripts/test-maintenance-tooling.cjs — disposable hook, partial-staging and clean-install verification.
 - npm run contracts:coding-labs:gen && npm run contracts:coding-labs:build — generated contracts.
 
 These commands do not publish packages or deploy.

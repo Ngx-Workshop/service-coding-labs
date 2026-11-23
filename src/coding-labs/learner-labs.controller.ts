@@ -5,25 +5,14 @@ import {
   Post,
   Param,
   UseGuards,
-  Injectable,
-  CanActivate,
-  ExecutionContext,
   ValidationPipe,
   HttpCode,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthClientService } from '@tmdjr/ngx-auth-client';
+import { CodingLabsLearnerGuard } from './learner.guard';
 import { MongoIdPipe } from './mongo-id.pipe';
 import { LabVersionsService } from './lab-versions.service';
 import { GradeLabDto, LabGradeDto, LabSummaryDto } from './learner-labs.dto';
-@Injectable()
-export class CodingLabsLearnerGuard implements CanActivate {
-  constructor(private readonly auth: AuthClientService) {}
-  async canActivate(context: ExecutionContext) {
-    await this.auth.validateAccessToken(context.switchToHttp().getRequest());
-    return true;
-  }
-}
 @ApiTags('Learner labs')
 @Controller('published-labs')
 export class LearnerLabsController {

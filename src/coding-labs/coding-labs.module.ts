@@ -1,8 +1,7 @@
 import { LabPreflightController } from './lab-preflight.controller';
-import {
-  LearnerLabsController,
-  CodingLabsLearnerGuard,
-} from './learner-labs.controller';
+import { LearnerLabsController } from './learner-labs.controller';
+import { CodingLabsLearnerGuard } from './learner.guard';
+import { LabPreflightService } from './lab-preflight.service';
 import { NgxAuthClientModule } from '@tmdjr/ngx-auth-client';
 import { CodingLabsAdminGuard } from './admin.guard';
 import { ChallengeRunnerService } from './challenge-runner.service';
@@ -94,6 +93,7 @@ const FAKE_PROVIDERS =
     CodingLabsAdminGuard,
     CodingLabsLearnerGuard,
     ChallengeRunnerService,
+    LabPreflightService,
     LabsService,
     LabVersionsService,
     LabEmbedsService,

@@ -4,18 +4,27 @@
 
 NestJS 11/Mongoose 8 owns challenge authoring and published delivery. Workshops, learner attempt persistence and identity remain external. This service also owns server grading of submitted learner code.
 
-| Source | Responsibility |
-| --- | --- |
-| src/coding-labs/labs.service.ts | Catalog, workshop/slug uniqueness, metadata, archive |
-| src/coding-labs/lab-versions.service.ts | Current draft, hashes, writer lock, publication and redaction |
-| src/coding-labs/challenge-content.ts | Validation, comparators, example and hash |
-| src/coding-labs/challenge-runner.service.ts | TypeScript transpilation and Docker execution |
-| src/coding-labs/admin.guard.ts | Token validation, admin role and audit identity |
-| src/coding-labs/lab-embeds.service.ts | Published lab/document block references |
-| src/coding-labs/dto and schemas | Validation/Swagger and persistence |
-| src/swagger.ts, openapi.json, contracts/coding-labs | Database-free contract generation |
+| Source                                                     | Responsibility                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------- |
+| src/coding-labs/labs.service.ts                            | Catalog, workshop/slug uniqueness, metadata, archive          |
+| src/coding-labs/lab-versions.service.ts                    | Current draft, hashes, writer lock, publication and redaction |
+| src/coding-labs/challenge-content.ts                       | Validation, comparators, example and hash                     |
+| src/coding-labs/challenge-runner.service.ts                | TypeScript transpilation and Docker execution                 |
+| src/coding-labs/lab-preflight.service.ts, draft-content.ts | Database-free preflight and shared draft normalization        |
+| src/coding-labs/admin.guard.ts                             | Token validation, admin role and audit identity               |
+| src/coding-labs/learner.guard.ts                           | Learner platform authentication                               |
+| src/coding-labs/lab-embeds.service.ts                      | Published lab/document block references                       |
+| src/coding-labs/dto and schemas                            | Validation/Swagger and persistence                            |
+| src/swagger.ts, openapi.json, contracts/coding-labs        | Database-free contract generation                             |
 
 Collections retain hands_on_labs, hands_on_lab_versions and hands_on_lab_embeds. No destructive migration.
+
+CodingLabsModule owns the related catalog/version/embed schemas and providers,
+imports the auth client explicitly and exports nothing. Preflight depends only on
+the same single runner used by versions/learner grading, preserving shared capacity.
+No feature global, provider duplication or circular module dependency is needed.
+ObservabilityModule owns Terminus liveness; shared observability utilities handle
+async request context and safe operation summaries without database/auth dependencies.
 
 ## Lifecycle
 
@@ -52,7 +61,7 @@ References: [Docker controls](https://docs.docker.com/reference/cli/docker/conta
 ## Unsaved lab preflight — 2026-11-05
 
 Admin-only POST /lab-preflight accepts PreflightLabDto (draft content without audit
-identity/contentHash), normalizes it through LabVersionsService and runs the existing
+identity/contentHash), normalizes it through LabPreflightService/draftContent and runs the existing
 isolated ChallengeRunnerService. It never queries or writes lab/version models or
 acquires a persisted lab lock. Existing runner capacity, validation and container
 limits apply; 400 invalid/unsupported content, 429 capacity, 503 unavailable runner.

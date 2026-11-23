@@ -1,18 +1,19 @@
-import { PreflightLabDto } from './dto/preflight.dto';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import { contentHash, initialContent } from './challenge-content';
+import { draftContent } from './draft-content';
+import { observeDomainOperation } from '../observability/domain-operation';
 import { ChallengeRunnerService } from './challenge-runner.service';
 import {
   CreateDraftVersionDto,
-  LabTestCaseDto,
   UpdateDraftVersionDto,
 } from './dto/create-draft-version.dto';
 import { PublishVersionDto } from './dto/publish-version.dto';
@@ -24,9 +25,9 @@ import {
   HandsOnLabDocument,
   HandsOnLabMongo,
 } from './schemas/hands_on_labs.schema';
-// tesst actions
 @Injectable()
 export class LabVersionsService {
+  private readonly logger = new Logger(LabVersionsService.name);
   constructor(
     @InjectModel(HandsOnLabVersionMongo.name)
     private readonly versions: Model<HandsOnLabVersionDocument>,
@@ -39,48 +40,50 @@ export class LabVersionsService {
     labId: string,
     dto: CreateDraftVersionDto
   ): Promise<HandsOnLabVersionMongo> {
-    return this.withLock(labId, async (lab) => {
-      if (lab.currentDraftVersionId) {
-        const existing = await this.versions
-          .findOne({ _id: lab.currentDraftVersionId, labId, isDraft: true })
-          .exec();
-        if (existing) {
-          if (!existing.contentHash)
-            existing.contentHash = contentHash(existing);
-          return existing;
+    return observeDomainOperation(this.logger, 'lab_draft_created', () =>
+      this.withLock(labId, async (lab) => {
+        if (lab.currentDraftVersionId) {
+          const existing = await this.versions
+            .findOne({ _id: lab.currentDraftVersionId, labId, isDraft: true })
+            .exec();
+          if (existing) {
+            if (!existing.contentHash)
+              existing.contentHash = contentHash(existing);
+            return existing;
+          }
         }
-      }
-      const latest = await this.versions
-        .findOne({ labId })
-        .sort({ versionNumber: -1 })
-        .exec();
-      const source = await this.versions
-        .findOne({ labId, isDraft: false })
-        .sort({ versionNumber: -1 })
-        .lean()
-        .exec();
-      const versionNumber =
-        Math.max(lab.nextVersionNumber ?? 0, latest?.versionNumber ?? 0) + 1;
-      const content = this.content(dto, source ?? initialContent);
-      const draft = await new this.versions({
-        ...content,
-        labId,
-        versionNumber,
-        isDraft: true,
-        contentHash: contentHash(content),
-        createdAt: new Date().toISOString(),
-        createdBy: dto.createdBy,
-      }).save();
-      await this.labs
-        .findByIdAndUpdate(labId, {
-          currentDraftVersionId: draft._id,
-          nextVersionNumber: versionNumber,
-          updatedAt: new Date().toISOString(),
-          updatedBy: dto.createdBy,
-        })
-        .exec();
-      return draft;
-    });
+        const latest = await this.versions
+          .findOne({ labId })
+          .sort({ versionNumber: -1 })
+          .exec();
+        const source = await this.versions
+          .findOne({ labId, isDraft: false })
+          .sort({ versionNumber: -1 })
+          .lean()
+          .exec();
+        const versionNumber =
+          Math.max(lab.nextVersionNumber ?? 0, latest?.versionNumber ?? 0) + 1;
+        const content = draftContent(dto, source ?? initialContent);
+        const draft = await new this.versions({
+          ...content,
+          labId,
+          versionNumber,
+          isDraft: true,
+          contentHash: contentHash(content),
+          createdAt: new Date().toISOString(),
+          createdBy: dto.createdBy,
+        }).save();
+        await this.labs
+          .findByIdAndUpdate(labId, {
+            currentDraftVersionId: draft._id,
+            nextVersionNumber: versionNumber,
+            updatedAt: new Date().toISOString(),
+            updatedBy: dto.createdBy,
+          })
+          .exec();
+        return draft;
+      })
+    );
   }
 
   async findAll(labId: string): Promise<HandsOnLabVersionMongo[]> {
@@ -105,42 +108,36 @@ export class LabVersionsService {
     versionId: string,
     dto: UpdateDraftVersionDto
   ): Promise<HandsOnLabVersionMongo> {
-    return this.withLock(labId, async (lab) => {
-      const current = await this.requireCurrentDraft(lab, versionId);
-      if (
-        dto.expectedContentHash !==
-        (current.contentHash ?? contentHash(current))
-      ) {
-        throw new ConflictException(
-          'This draft changed. Reload before saving to avoid overwriting another author.'
-        );
-      }
-      const content = this.content(dto, current);
-      const updated = await this.versions
-        .findOneAndUpdate(
-          { _id: versionId, labId, isDraft: true },
-          { $set: { ...content, contentHash: contentHash(content) } },
-          { new: true, runValidators: true }
-        )
-        .exec();
-      if (!updated)
-        throw new ConflictException('Draft changed; reload and retry');
-      await this.labs
-        .findByIdAndUpdate(labId, {
-          updatedAt: new Date().toISOString(),
-          updatedBy: dto.createdBy,
-        })
-        .exec();
-      return updated;
-    });
-  }
-
-  async preflight(dto: PreflightLabDto) {
-    const version = Object.assign(
-      new HandsOnLabVersionMongo(),
-      this.content({ ...dto, createdBy: 'preflight' }, {})
+    return observeDomainOperation(this.logger, 'lab_draft_updated', () =>
+      this.withLock(labId, async (lab) => {
+        const current = await this.requireCurrentDraft(lab, versionId);
+        if (
+          dto.expectedContentHash !==
+          (current.contentHash ?? contentHash(current))
+        ) {
+          throw new ConflictException(
+            'This draft changed. Reload before saving to avoid overwriting another author.'
+          );
+        }
+        const content = draftContent(dto, current);
+        const updated = await this.versions
+          .findOneAndUpdate(
+            { _id: versionId, labId, isDraft: true },
+            { $set: { ...content, contentHash: contentHash(content) } },
+            { new: true, runValidators: true }
+          )
+          .exec();
+        if (!updated)
+          throw new ConflictException('Draft changed; reload and retry');
+        await this.labs
+          .findByIdAndUpdate(labId, {
+            updatedAt: new Date().toISOString(),
+            updatedBy: dto.createdBy,
+          })
+          .exec();
+        return updated;
+      })
     );
-    return this.runner.verify(version);
   }
 
   async verify(labId: string, versionId: string) {
@@ -154,63 +151,67 @@ export class LabVersionsService {
     versionId: string,
     dto: PublishVersionDto
   ): Promise<HandsOnLabVersionMongo> {
-    return this.withLock(labId, async (lab) => {
-      const version = await this.findOne(labId, versionId);
-      if (
-        dto.expectedContentHash !==
-        (version.contentHash ?? contentHash(version))
-      ) {
-        throw new ConflictException(
-          'This draft changed. Reload and verify the latest content before publishing.'
-        );
-      }
-      if (
-        !version.isDraft &&
-        String(lab.latestPublishedVersionId) === versionId
-      )
-        return version;
-      if (String(lab.currentDraftVersionId) !== versionId)
-        throw new ConflictException('Only the current draft can be published');
-      // A retry repairs a failed lab-pointer write after a successful version write.
-      const verification = await this.runner.verify(version);
-      if (!verification.passed)
-        throw new BadRequestException({
-          message:
-            'Reference solution must pass every sample and hidden test before publishing',
-          verification,
-        });
-      const now = new Date().toISOString();
-      const published = !version.isDraft
-        ? version
-        : await this.versions
-            .findOneAndUpdate(
-              { _id: versionId, labId, isDraft: true },
-              {
-                $set: {
-                  isDraft: false,
-                  publishedAt: now,
-                  publishedBy: dto.publishedBy,
-                  contentHash: verification.contentHash,
+    return observeDomainOperation(this.logger, 'lab_published', () =>
+      this.withLock(labId, async (lab) => {
+        const version = await this.findOne(labId, versionId);
+        if (
+          dto.expectedContentHash !==
+          (version.contentHash ?? contentHash(version))
+        ) {
+          throw new ConflictException(
+            'This draft changed. Reload and verify the latest content before publishing.'
+          );
+        }
+        if (
+          !version.isDraft &&
+          String(lab.latestPublishedVersionId) === versionId
+        )
+          return version;
+        if (String(lab.currentDraftVersionId) !== versionId)
+          throw new ConflictException(
+            'Only the current draft can be published'
+          );
+        // A retry repairs a failed lab-pointer write after a successful version write.
+        const verification = await this.runner.verify(version);
+        if (!verification.passed)
+          throw new BadRequestException({
+            message:
+              'Reference solution must pass every sample and hidden test before publishing',
+            verification,
+          });
+        const now = new Date().toISOString();
+        const published = !version.isDraft
+          ? version
+          : await this.versions
+              .findOneAndUpdate(
+                { _id: versionId, labId, isDraft: true },
+                {
+                  $set: {
+                    isDraft: false,
+                    publishedAt: now,
+                    publishedBy: dto.publishedBy,
+                    contentHash: verification.contentHash,
+                  },
                 },
-              },
-              { new: true, runValidators: true }
-            )
-            .exec();
-      if (!published)
-        throw new ConflictException('Draft changed; reload and retry');
-      await this.labs
-        .findByIdAndUpdate(labId, {
-          $set: {
-            latestPublishedVersionId: published._id,
-            status: 'published',
-            updatedAt: now,
-            updatedBy: dto.publishedBy,
-          },
-          $unset: { currentDraftVersionId: '' },
-        })
-        .exec();
-      return published;
-    });
+                { new: true, runValidators: true }
+              )
+              .exec();
+        if (!published)
+          throw new ConflictException('Draft changed; reload and retry');
+        await this.labs
+          .findByIdAndUpdate(labId, {
+            $set: {
+              latestPublishedVersionId: published._id,
+              status: 'published',
+              updatedAt: now,
+              updatedBy: dto.publishedBy,
+            },
+            $unset: { currentDraftVersionId: '' },
+          })
+          .exec();
+        return published;
+      })
+    );
   }
 
   async learnerContent(labId: string, versionId?: string) {
@@ -277,29 +278,6 @@ export class LabVersionsService {
       durationMs: result.durationMs,
       results: result.results.filter((r) => r.suite === 'sample'),
     };
-  }
-
-  private content(
-    dto: CreateDraftVersionDto | UpdateDraftVersionDto,
-    source: Partial<HandsOnLabVersionMongo>
-  ): Partial<HandsOnLabVersionMongo> {
-    return {
-      language: dto.language ?? source.language ?? 'typescript',
-      promptMarkdown: dto.promptMarkdown ?? source.promptMarkdown ?? '',
-      starterCode: dto.starterCode ?? source.starterCode ?? '',
-      hints: dto.hints ?? source.hints ?? [],
-      referenceSolution: dto.referenceSolution ?? source.referenceSolution,
-      sampleTests: this.normalize(dto.sampleTests ?? source.sampleTests ?? []),
-      hiddenTests: this.normalize(dto.hiddenTests ?? source.hiddenTests ?? []),
-      runner: dto.runner ?? source.runner ?? initialContent.runner,
-    };
-  }
-
-  private normalize(tests: LabTestCaseDto[]) {
-    return tests.map((test) => ({
-      ...JSON.parse(JSON.stringify(test)),
-      _id: test._id ?? new Types.ObjectId().toString(),
-    }));
   }
 
   private async requireCurrentDraft(lab: HandsOnLabMongo, versionId: string) {

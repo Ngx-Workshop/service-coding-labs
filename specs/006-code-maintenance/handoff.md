@@ -1,0 +1,82 @@
+# Handoff: Code Maintenance
+
+Status: Implemented locally; live integration pending · Updated: 2026-11-22
+[Spec](spec.md) · [Plan](plan.md) · [Tasks](tasks.md) · [Audit](audit.md)
+
+## Delivered
+
+- Thin controllers retained; learner auth guard moved to its own provider file.
+  Preflight now uses a database-free service and shared draft normalization.
+  CodingLabsModule remains cohesive, private and acyclic with one runner instance.
+- Pinned Husky/lint-staged, staged-only Prettier and a self-contained guarded
+  prepare lifecycle. Non-mutating checks gate PR/main validation and the existing
+  publisher. Generated outputs/build artifacts are excluded.
+- Explicit native ESLint suppression baseline from untouched HEAD, then pruned:
+  95 inherited errors remain, 12 legacy warnings are visible. New violations fail.
+  Counts are per file/rule, so review still matters; do not baseline new errors.
+- Safe contextual draft/publication/verification events with operation/run UUIDs,
+  async request correlation, outcomes, duration and bounded suite counts.
+  Docker failures log allowlisted type/exit code, never raw stderr/errors/config.
+  Nested errors are recorded once; HTTP logs and quiet GET/HEAD liveness remain.
+- Architecture/development/observability context and entry points updated.
+  Existing dirty setup files and unrelated historical feature records preserved.
+
+## Actual local evidence
+
+| Check                                                         | Result                                                                                                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Before-move preflight/publication characterization            | 13 cases pass, including added failure/recovery coverage                                                                                              |
+| `npm test -- --runInBand`                                     | 7 suites, 44 tests pass                                                                                                                               |
+| `npm run test:e2e -- --runInBand`                             | 7 real HTTP/disposable Mongo cases pass; auth/runner doubled                                                                                          |
+| `npm run build`                                               | Pass, database-free OpenAPI generation included                                                                                                       |
+| `npm run lint:check`                                          | Exit 0 with explicit inherited baseline and 12 visible warnings                                                                                       |
+| `npm run format:check`                                        | Pass, non-mutating                                                                                                                                    |
+| `node scripts/test-maintenance-tooling.cjs`                   | 4 install/hook scenarios pass, none skipped                                                                                                           |
+| Negative lint/format checks                                   | Both reject deliberately bad fixture source; format check leaves bytes unchanged                                                                      |
+| JSON/correlation/privacy                                      | Native level/context/message shape, success/failure/warn, content/error canaries, concurrent isolation, ignored incoming IDs and quiet health covered |
+| Contract/schema/admin-policy diff                             | Unchanged, including generated OpenAPI/contracts                                                                                                      |
+| `git diff --check` and non-formatting dependent source review | Pass, scoped changes                                                                                                                                  |
+
+Install fixtures actually run clean developer and CI npm ci, no-Git/package-only
+Docker-style npm ci, and production npm ci --omit=dev. Developer fixtures commit
+only temporary test repositories and verify partial staging, unrelated unstaged
+data, ignored generated files and failed-hook rejection. Fixtures are cleaned.
+No commit was created in this repository; no push, package release or deployment
+was attempted. The full baseline/final commands and boundaries are in the audit.
+
+## Compatibility and limits
+
+No route/DTO/error shape, authoring policy, persisted collection/index, publication
+lock/retry, immutable version or hidden-test delivery change. No migration or
+consumer contract update is needed. OpenAPI was regenerated by build and remains
+identical; contract generation/build/publication is therefore unnecessary here.
+The runner capacity remains shared across authoring/preflight/learner verification.
+Request IDs are local, not distributed traces; direct/background calls omit them.
+Native Nest event fields are nested under message, not top-level collector fields.
+
+Local shell uses Node 24.9.0/npm 11.6.0; deployment/CI targets pinned Node 22.23.5.
+Tool dependencies support that Node target. Actual Linux image build and hosted
+Actions execution were not performed. Docker daemon is unavailable in this
+session; no real container execution result is claimed. Baseline lint debt and
+the count-based suppression limitation remain documented maintenance risks.
+
+## External-owner handoff and exact next action
+
+1. **Repository maintainer / execution infrastructure:** review the changes and run
+   existing CI on the pinned Node target. When Docker is available, build the
+   existing Dockerfile, prepare RUNNER_IMAGE on its execution daemon and run the
+   existing smoke command against an isolated local service/database. Confirm
+   passing/failing/busy/unavailable verification and unchanged container limits.
+   No production daemon or shared environment was modified for this task.
+2. **Infrastructure owner `Ngx-Workshop/nginx-ngx-workshop.io`:** after authorized
+   deployment/collector activation, generate one successful and one failed coding
+   operation. In Grafana Explore verify existing service stream receipt, native
+   level/context, message.event/outcome/requestId/runId and expected counts.
+   Verify GET/HEAD health polls remain excluded and canary content is absent.
+   Keep IDs as parsed fields, not Loki labels; token stays host-owned.
+3. No gateway, auth, frontend or data-service source change is required. Existing
+   downstream clients remain compatible. Follow-up deployment/publication requires
+   separate user authorization.
+
+All local tasks have evidence. Actual Docker runtime, hosted CI and live Grafana
+ingestion remain explicitly pending, not represented as completed local checks.

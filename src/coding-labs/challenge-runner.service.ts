@@ -15,6 +15,7 @@ import {
 } from './challenge-content';
 import { HandsOnLabVersionMongo } from './schemas/hands_on_lab_versions.schema';
 import { TestResultDto, VerificationDto } from './dto/verification.dto';
+import { observeDomainOperation } from '../observability/domain-operation';
 
 // This harness runs ONLY inside a constrained container. vm is a convenience
 // for function lookup and synchronous timeouts, never the isolation boundary.
@@ -43,12 +44,37 @@ process.stdin.on('end', async () => {
   } finally { clearInterval(keepAlive); }
 });`;
 
+class RunnerStartupException extends ServiceUnavailableException {
+  constructor(
+    message: string,
+    readonly runnerFailure: 'spawn' | 'container_start',
+    readonly exitCode?: 125 | 126 | 127
+  ) {
+    super(message);
+  }
+}
+
 @Injectable()
 export class ChallengeRunnerService {
   private readonly logger = new Logger(ChallengeRunnerService.name);
   private active = 0;
 
   async verify(version: HandsOnLabVersionMongo): Promise<VerificationDto> {
+    return observeDomainOperation(
+      this.logger,
+      'challenge_verification',
+      () => this.verifySuite(version),
+      (result) => result,
+      (error) =>
+        error instanceof RunnerStartupException
+          ? { runnerFailure: error.runnerFailure, exitCode: error.exitCode }
+          : {}
+    );
+  }
+
+  private async verifySuite(
+    version: HandsOnLabVersionMongo
+  ): Promise<VerificationDto> {
     validateChallenge(version);
     if (this.active >= 2)
       throw new HttpException('Verification is busy. Try again shortly.', 429);
@@ -216,15 +242,13 @@ export class ChallengeRunnerService {
       child.stdout.on('data', (data) => consume(data, false));
       child.stderr.on('data', (data) => consume(data, true));
       child.stdin.on('error', () => {});
-      child.on('error', (error) => {
+      child.on('error', () => {
         clearTimeout(timer);
         stopped = true;
-        this.logger.error(
-          `Docker runner unavailable (image=${image}, context=${context ?? 'default'}): ${error.message}`
-        );
         reject(
-          new ServiceUnavailableException(
-            'Docker runner is unavailable. Start Docker and prepare RUNNER_IMAGE.'
+          new RunnerStartupException(
+            'Docker runner is unavailable. Start Docker and prepare RUNNER_IMAGE.',
+            'spawn'
           )
         );
       });
@@ -236,12 +260,11 @@ export class ChallengeRunnerService {
         }
         stopped = true;
         if (code === 125 || code === 126 || code === 127) {
-          this.logger.error(
-            `Docker runner could not start (exit=${code}, image=${image}, context=${context ?? 'default'}): ${stderr.trim().slice(0, 2000) || 'No Docker error output'}`
-          );
           reject(
-            new ServiceUnavailableException(
-              'Docker runner could not start. Check Docker and pull RUNNER_IMAGE.'
+            new RunnerStartupException(
+              'Docker runner could not start. Check Docker and pull RUNNER_IMAGE.',
+              'container_start',
+              code
             )
           );
           return;

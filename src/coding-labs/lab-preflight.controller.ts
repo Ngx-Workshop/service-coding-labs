@@ -12,7 +12,7 @@ import {
 import { CodingLabsAdminGuard } from './admin.guard';
 import { PreflightLabDto } from './dto/preflight.dto';
 import { VerificationDto } from './dto/verification.dto';
-import { LabVersionsService } from './lab-versions.service';
+import { LabPreflightService } from './lab-preflight.service';
 
 @ApiTags('Lab preflight')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ import { LabVersionsService } from './lab-versions.service';
 @UseGuards(CodingLabsAdminGuard)
 @Controller('lab-preflight')
 export class LabPreflightController {
-  constructor(private readonly versions: LabVersionsService) {}
+  constructor(private readonly preflight: LabPreflightService) {}
 
   @ApiBadRequestResponse({
     description: 'Incomplete or unsupported challenge content',
@@ -41,6 +41,6 @@ export class LabPreflightController {
     description: 'Isolated verification without creating or changing a lab',
   })
   verify(@Body() value: PreflightLabDto) {
-    return this.versions.preflight(value);
+    return this.preflight.verify(value);
   }
 }

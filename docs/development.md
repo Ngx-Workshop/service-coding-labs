@@ -1,22 +1,22 @@
 # Development
 
-| Environment | Purpose |
-| --- | --- |
-| MONGODB_URI | Runtime database; local script uses coding_labs_local |
-| PORT / HOST | Default 3009 / 0.0.0.0; local script explicitly binds loopback:3009 |
-| AUTH_BASE_URL | Token validation service, default https://auth.ngx-workshop.io |
-| CORS_ORIGINS | Defaults http://localhost:4201,https://admin.ngx-workshop.io |
-| CODING_LABS_LOCAL_DEV | Explicit non-production, loopback-only admin mode; browser Origin checked |
-| RUNNER_IMAGE | Prepared execution image, default node:22-alpine |
-| RUNNER_DOCKER_CONTEXT | Optional context, e.g. desktop-linux |
-| DOCKER_HOST / DOCKER_TLS_VERIFY / DOCKER_CERT_PATH | Standard execution-daemon connection settings |
-| GENERATE_OPENAPI | Generation only; main refuses to listen in this mode |
+| Environment                                        | Purpose                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| MONGODB_URI                                        | Runtime database; local script uses coding_labs_local                     |
+| PORT / HOST                                        | Default 3009 / 0.0.0.0; local script explicitly binds loopback:3009       |
+| AUTH_BASE_URL                                      | Token validation service, default https://auth.ngx-workshop.io            |
+| CORS_ORIGINS                                       | Defaults http://localhost:4201,https://admin.ngx-workshop.io              |
+| CODING_LABS_LOCAL_DEV                              | Explicit non-production, loopback-only admin mode; browser Origin checked |
+| RUNNER_IMAGE                                       | Prepared execution image, default node:22-alpine                          |
+| RUNNER_DOCKER_CONTEXT                              | Optional context, e.g. desktop-linux                                      |
+| DOCKER_HOST / DOCKER_TLS_VERIFY / DOCKER_CERT_PATH | Standard execution-daemon connection settings                             |
+| GENERATE_OPENAPI                                   | Generation only; main refuses to listen in this mode                      |
 
 Do not commit .env/credentials. The inherited .env may specify PORT=3008; start:local overrides that and the database. The tested local runner image resolved to sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402.
 
 ## Checks
 
-README lists commands. E2E creates a random coding_labs_test_* database on local Mongo, substitutes auth-token validation and runner results, and drops only that database. It exercises actual guards, DTO validation, controllers and storage. Smoke uses real Docker and leaves its lab records archived. Unit tests need no infrastructure.
+README lists commands. E2E creates a random coding*labs_test*\* database on local Mongo, substitutes auth-token validation and runner results, and drops only that database. It exercises actual guards, DTO validation, controllers and storage. Smoke uses real Docker and leaves its lab records archived. Unit tests need no infrastructure.
 
 Pre-pull the image; requests use --pull=never. Unavailable runner/image returns 503; two already-active verification suites return 429. Limits: 50 tests; 100–10000 ms/case; 64–512 MB/container; 60 seconds/suite; 64 KB output. Nest's default body-size limit applies.
 
@@ -29,10 +29,12 @@ Desktop and check `docker info`, `docker image inspect node:22-alpine`, and
 `RUNNER_DOCKER_CONTEXT`, use that same `--context` for every check and image pull.
 Restart the service after changing its environment.
 
-Runner startup failures log the image, context, exit code and up to 2,000
-characters of Docker stderr; missing-CLI failures log the spawn error. HTTP 503
-responses retain the generic message. Solution code and test inputs are not
-included in these diagnostic messages.
+Runner startup failures now log a structured suite failure with `statusCode: 503`,
+`runnerFailure: container_start` and exit code 125/126/127, or `runnerFailure: spawn`
+for spawn failures. Raw stderr, spawn errors and environment image/context values
+are deliberately excluded because they can contain credentials or private content.
+Inspect Docker availability/image configuration directly when diagnosing a failure.
+HTTP 503 responses retain their existing generic messages.
 
 On 2026-10-06, both local Docker sockets were unavailable. Starting Docker Desktop
 restored the default connection; the existing node:22-alpine image ran with the
@@ -96,3 +98,35 @@ See [deployment cleanup](deployment-cleanup.md) for success-only image/container
 ## Service observability
 
 See [logging and heartbeat](observability.md) for operational endpoint semantics, JSON logging, collector ownership and actual validation.
+
+## Maintenance checks and hooks
+
+- `npm ci` enables Husky locally when Git and devDependencies are present.
+  Preparation skips CI, `HUSKY=0`, production, omitted devDependencies and no-Git
+  installs. The lifecycle is self-contained in package.json, so Docker's
+  package-manifest-only installation order remains valid.
+- Pre-commit runs the locally installed lint-staged/Prettier, with no tool download.
+  Only staged supported TS/JS/JSON/Markdown/YAML files are formatted. Default
+  lint-staged stash/hide/restore preserves partial staging and unstaged changes.
+  Generated contracts/OpenAPI/lockfile/suppression baseline and build/coverage
+  output are excluded by .prettierignore; there are no vendored source assets.
+- `npm run format:check` is non-mutating and checks all application/test TypeScript
+  plus the maintained tooling configuration/script. Historical documentation and
+  unrelated deployment scripts are not silently pulled into a new formatting gate.
+  Staging supported documentation still formats that staged document.
+- `npm run lint:check` is non-mutating. eslint-suppressions.json was generated
+  using ESLint 9.30.0's native `--suppress-all` on untouched HEAD `88ded1e`, then
+  pruned as affected code was improved. It records inherited errors, not new ones;
+  rules remain enabled. Suppression counts are per file/rule, not exact lines.
+  Review changed code even when a file stays within its existing debt budget.
+  Do not regenerate with `--suppress-all` to hide new errors. When reducing debt,
+  run `npm run lint:check -- --prune-suppressions` and review the baseline change.
+  Unsuppressed legacy warnings remain visible.
+- `node scripts/test-maintenance-tooling.cjs` uses disposable Git/install fixtures:
+  clean developer/CI/no-Git package-only/production installs, formatting, partial
+  staging, ignored generated files, hook rejection and non-mutating negative
+  formatting checks. It creates commits only in temporary fixtures and cleans them.
+- The PR/main validation workflow runs checks, unit tests, tooling fixtures and
+  build. Publishing additionally runs lint/format/unit gates before its existing
+  generation/release steps. Mongo e2e still requires its local disposable database;
+  Docker execution and live Grafana acceptance are separate infrastructure checks.
